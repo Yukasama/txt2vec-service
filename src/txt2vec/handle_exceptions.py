@@ -57,6 +57,7 @@ def handle_exception(exception: Exception) -> HTTPException:
     :return: An HTTPException with standardized error format
     """
     if isinstance(exception, HTTPException):
+        logger.error("HTTPException: {} - {}", exception.status_code, exception.detail)
         return exception
 
     if isinstance(exception, AppError):
