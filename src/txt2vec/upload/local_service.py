@@ -29,7 +29,8 @@ PYTORCH_EXTENSIONS: Final[set[str]] = {
     ".bin",
     ".model",
     ".weights",
-    ".ckpt",
+    ".json",
+    ".safetensors",
 }
 
 

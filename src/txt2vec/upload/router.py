@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import (
     APIRouter,
     Depends,
+    File,
     Query,
     Request,
     Response,
@@ -19,8 +20,8 @@ from txt2vec.datasets.exceptions import InvalidFileError
 from txt2vec.upload.exceptions import ServiceUnavailableError
 from txt2vec.upload.github_service import handle_model_download
 from txt2vec.upload.huggingface_service import load_model_and_save_to_db
-from txt2vec.upload.local_service import upload_embedding_model
 from txt2vec.upload.schemas import GitHubModelRequest, HuggingFaceModelRequest
+from txt2vec.upload.zip_service import upload_zip_model
 
 router = APIRouter(tags=["Model Upload"])
 
@@ -96,42 +97,47 @@ async def load_model_github(request: GitHubModelRequest) -> Response:
 
 
 @router.post("/models")
-async def load_model_local(
-    files: list[UploadFile],
+async def load_model_zip(
+    file: Annotated[UploadFile, File()],
     request: Request,
     model_name: Annotated[str, Query(description="Name for the uploaded model")],
-    extract_zip: Annotated[
-        bool,
-        Query(description="Whether to extract ZIP files"),
-    ] = True,
+    db: Annotated[AsyncSession, Depends(get_session)],
 ) -> Response:
-    """Upload PyTorch model files to the server.
+    """Upload a ZIP file containing model files to the server.
+
+    This endpoint processes an uploaded ZIP file containing model files,
+    extracts valid model files, and saves them to the model directory.
+    If successful, it returns a 201 Created response with a Location header
+    pointing to the model.
 
     Args:
+        file: The uploaded ZIP file containing model files.
         request: The HTTP request object.
         model_name: Name to assign to the uploaded model.
-        extract_zip: Whether to extract ZIP files (default: True).
-        files: The uploaded model files.
+        db: The database session for model persistence.
 
     Returns:
         A 201 Created response with a Location header.
 
     Raises:
+        InvalidFileError: If no file is provided or format is invalid.
         HTTPException: If an error occurs during file upload or processing.
-
     """
-    if not files:
-        raise InvalidFileError
+    if not file:
+        raise InvalidFileError("No file uploaded")
+
+    if not file.filename or not file.filename.lower().endswith(".zip"):
+        raise InvalidFileError("Only ZIP archives are supported")
 
     logger.debug(
-        "Uploading model '{}' with {} files",
+        "ZIP-Upload: '{}' with {} bytes",
         model_name,
-        len(files),
+        file.size if hasattr(file, "size") else "unknown size",
     )
 
-    result = await upload_embedding_model(files, model_name, extract_zip)
+    result = await upload_zip_model(file, model_name, db)
     logger.info(
-        "Successfully uploaded model: {}",
+        "ZIP model successfully uploaded: {}",
         result["model_dir"],
     )
 
