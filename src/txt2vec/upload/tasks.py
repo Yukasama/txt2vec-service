@@ -21,7 +21,7 @@ async def process_huggingface_model_background(
     model_id: str,
     tag: str,
     task_id: UUID
-):
+) -> None:
     """Processes a Hugging Face model upload in the background.
 
     This function handles the background processing of a Hugging Face model
