@@ -13,7 +13,7 @@ from txt2vec.upload.exceptions import InvalidModelError
 _models = {}
 
 
-async def load_model_and_cache_only(model_id: str, tag: str) -> None:
+async def load_model_and_cache_only(model_id: str, tag: str) -> None:  # noqa: RUF029
     """Loads a Hugging Face model and caches it locally.
 
     This function downloads a model and its tokenizer from the Hugging Face Hub,
