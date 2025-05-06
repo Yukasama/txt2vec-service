@@ -2,14 +2,11 @@
 
 import uuid
 from datetime import datetime
-from typing import Literal
 
 from sqlmodel import Column, DateTime, Field, SQLModel, func
 
-from txt2vec.ai_model.model_source import ModelSource
+from txt2vec.ai_model.model_source import ModelSource  # ← Das ist jetzt wichtig!
 from txt2vec.common.status import TaskStatus
-
-__all__ = ["UploadTask"]
 
 
 class UploadTask(SQLModel, table=True):
@@ -31,12 +28,14 @@ class UploadTask(SQLModel, table=True):
         description="Status of the upload task.",
     )
 
-    source: Literal[ModelSource.GITHUB, ModelSource.HUGGINGFACE] = Field(
+    # Verwende direkt das Enum, NICHT Literal[...]!
+    source: ModelSource = Field(
         description="Source of the model (github or huggingface)."
     )
 
     end_date: datetime | None = Field(
-        default=None, description="Optional end time of the upload task."
+        default=None,
+        description="Optional end time of the synthetic generation.",
     )
 
     error_msg: str | None = Field(

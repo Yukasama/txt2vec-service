@@ -4,6 +4,7 @@ from typing import Annotated
 
 from fastapi import (
     APIRouter,
+    BackgroundTasks,
     Depends,
     Query,
     Request,
@@ -14,53 +15,46 @@ from fastapi import (
 from loguru import logger
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from txt2vec.ai_model.model_source import ModelSource
+from txt2vec.common.status import TaskStatus
 from txt2vec.config.db import get_session
 from txt2vec.datasets.exceptions import InvalidFileError
-from txt2vec.upload.exceptions import ServiceUnavailableError
 from txt2vec.upload.github_service import handle_model_download
-from txt2vec.upload.huggingface_service import load_model_and_save_to_db
 from txt2vec.upload.local_service import upload_embedding_model
+from txt2vec.upload.models import UploadTask
+from txt2vec.upload.repository import save_upload_task  # muss angelegt werden
 from txt2vec.upload.schemas import GitHubModelRequest, HuggingFaceModelRequest
+from txt2vec.upload.tasks import process_huggingface_model_background
 
 router = APIRouter(tags=["Model Upload"])
 
 
-@router.post("/load", status_code=status.HTTP_201_CREATED)
+@router.post("/v1/upload/huggingface", status_code=status.HTTP_201_CREATED)
 async def load_model_huggingface(
     data: HuggingFaceModelRequest,
-    http_request: Request,
+    request: Request,
+    background_tasks: BackgroundTasks,
     db: Annotated[AsyncSession, Depends(get_session)],
 ) -> Response:
-    """Load a Hugging Face model and return a Location header.
+    key = f"{data.model_id}@{data.tag}"
 
-    This endpoint loads a Hugging Face model using the provided model ID and
-    tag, caches it locally, and stores it in the database. If successful, it
-    returns a 201 Created response with a Location header pointing to the
-    model.
+    # Task anlegen
+    upload_task = UploadTask(
+        model_tag=key,
+        task_status=TaskStatus.PENDING,
+        source=ModelSource.HUGGINGFACE,
+    )
+    await save_upload_task(db, upload_task)
 
-    Args:
-        data (HuggingFaceModelRequest): Contains the model ID and tag.
-        http_request (Request): The HTTP request object.
-        db (AsyncSession): The database session.
+    # Hintergrundprozess starten
+    background_tasks.add_task(
+        process_huggingface_model_background, data.model_id, data.tag, upload_task.id
+    )
 
-    Returns:
-        A 201 Created response with a Location header.
-
-    Raises:
-        HTTPException: If an error occurs during model loading or processing.
-    """
-    try:
-        logger.debug(f"Ladeanfrage: {data.model_id}@{data.tag}")
-        await load_model_and_save_to_db(data.model_id, data.tag, db)
-
-        key = f"{data.model_id}@{data.tag}"
-        return Response(
-            status_code=status.HTTP_201_CREATED,
-            headers={"Location": f"{http_request.url}/{key}"},
-        )
-    except Exception as e:
-        logger.exception("Fehler beim Laden:")
-        raise ServiceUnavailableError from e
+    return Response(
+        status_code=status.HTTP_201_CREATED,
+        headers={"Location": f"{request.base_url}v1/upload/tasks/{upload_task.id}"},
+    )
 
 
 @router.post("/add_model")
