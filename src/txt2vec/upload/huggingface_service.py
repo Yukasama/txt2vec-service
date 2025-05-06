@@ -14,9 +14,23 @@ _models = {}
 
 
 async def load_model_and_cache_only(model_id: str, tag: str) -> None:
+    """Loads a Hugging Face model and caches it locally.
+
+    This function downloads a model and its tokenizer from the Hugging Face Hub,
+    initializes a sentiment-analysis pipeline, and caches it in memory. If the
+    model is already cached, it skips the download and initialization.
+
+    Args:
+        model_id (str): The ID of the Hugging Face model repository.
+        tag (str): The specific revision or tag of the model to download.
+
+    Raises:
+        InvalidModelError: If an error occurs during the model download or
+        initialization.
+    """
     key = f"{model_id}@{tag}"
     if key in _models:
-        logger.info(f"Modell '{key}' bereits im Cache.")
+        logger.info(f"Model '{key}' is already in Cache.")
         return
 
     try:
@@ -26,7 +40,7 @@ async def load_model_and_cache_only(model_id: str, tag: str) -> None:
         tokenizer = AutoTokenizer.from_pretrained(snapshot_path)
         model = AutoModelForSequenceClassification.from_pretrained(snapshot_path)
         _models[key] = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer)
-        logger.info(f"Modell '{key}' erfolgreich geladen und gecached.")
+        logger.info(f"Model '{key}' successfully loaded and cached.")
     except Exception as e:
-        logger.exception(f"Fehler beim Laden des Modells '{key}'")
+        logger.exception(f"Error loading the model '{key}'")
         raise InvalidModelError from e

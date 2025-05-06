@@ -29,13 +29,31 @@ from txt2vec.upload.tasks import process_huggingface_model_background
 router = APIRouter(tags=["Model Upload"])
 
 
-@router.post("/v1/upload/huggingface", status_code=status.HTTP_201_CREATED)
+@router.post("/load", status_code=status.HTTP_201_CREATED)
 async def load_model_huggingface(
     data: HuggingFaceModelRequest,
     request: Request,
     background_tasks: BackgroundTasks,
     db: Annotated[AsyncSession, Depends(get_session)],
 ) -> Response:
+    """Initiates the loading of a Hugging Face model.
+
+    This endpoint creates a new upload task for a Hugging Face model, saves it
+    to the database, and starts a background process to handle the model loading.
+
+    Args:
+        data (HuggingFaceModelRequest): The request payload containing the model ID
+        and tag.
+        request (Request): The HTTP request object.
+        background_tasks (BackgroundTasks): FastAPI's background task manager.
+        db (AsyncSession): The asynchronous database session.
+
+    Returns:
+        Response: A 201 Created response with a Location header pointing to the task.
+
+    Raises:
+        HTTPException: If an error occurs during task creation or background processing.
+    """
     key = f"{data.model_id}@{data.tag}"
 
     # Task anlegen
