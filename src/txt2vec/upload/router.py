@@ -100,8 +100,10 @@ async def load_model_github(request: GitHubModelRequest) -> Response:
 async def load_model_zip(
     file: Annotated[UploadFile, File()],
     request: Request,
-    model_name: Annotated[str, Query(description="Name for the uploaded model")],
     db: Annotated[AsyncSession, Depends(get_session)],
+    model_name: Annotated[
+        str | None, Query(description="Name for the uploaded model")
+    ] = None,
 ) -> Response:
     """Upload a ZIP file containing model files to the server.
 

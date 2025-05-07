@@ -99,6 +99,8 @@ markers = [
     "dataset_valid: marks test as a dataset valid test",
     "dataset_invalid: marks test as a dataset invalid test",
     "inference: marks test as an inference test",
+    "upload: marks  test as an upload test",
+    
 ]
 minversion = "8.3.5"
 testpaths = ["tests"]

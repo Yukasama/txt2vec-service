@@ -69,6 +69,9 @@ async def upload_zip_model(
     if not file.filename or not file.filename.lower().endswith(".zip"):
         raise InvalidModelError("Only ZIP archives are supported")
 
+    if model_name is None:
+        model_name = Path(file.filename).stem
+
     safe_model_name = "".join(c if c.isalnum() else "_" for c in model_name)
     model_dir = Path(settings.model_upload_dir) / safe_model_name
     temp_path = None
