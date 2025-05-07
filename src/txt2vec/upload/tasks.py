@@ -41,7 +41,7 @@ async def process_huggingface_model_background(
         key = f"{model_id}@{tag}"
         try:
             logger.info(f"[BG] Starting model upload for task {task_id}")
-            await load_model_and_cache_only(model_id, tag)  # No DB insert!
+            await load_model_and_cache_only(model_id, tag)
 
             ai_model = AIModel(
                 model_tag=key,

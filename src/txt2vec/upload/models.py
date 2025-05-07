@@ -5,7 +5,7 @@ from datetime import datetime
 
 from sqlmodel import Column, DateTime, Field, SQLModel, func
 
-from txt2vec.ai_model.model_source import ModelSource  # ← Das ist jetzt wichtig!
+from txt2vec.ai_model.model_source import ModelSource
 from txt2vec.common.status import TaskStatus
 
 
@@ -28,7 +28,6 @@ class UploadTask(SQLModel, table=True):
         description="Status of the upload task.",
     )
 
-    # Verwende direkt das Enum, NICHT Literal[...]!
     source: ModelSource = Field(
         description="Source of the model (github or huggingface)."
     )
