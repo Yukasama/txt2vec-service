@@ -37,6 +37,14 @@ def config_logger() -> None:
             enqueue=True,
         )
 
+    # if is_production:
+    #     loki_handler = LokiHandler(
+    #         url="http://loki:3100/loki/api/v1/push",  # Replace with your Loki URL
+    #         tags={"app": "txt2vec", "env": settings.app_env},
+    #         version="1",
+    #     )
+    #     logger.add(loki_handler, level="INFO")  # Adjust log level as needed
+
 
 def _format_record(record: Mapping[str, Any]) -> str:
     ts = record["time"].strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]

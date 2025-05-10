@@ -7,6 +7,7 @@ from typing import Final
 from aiofiles.os import makedirs
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -51,6 +52,7 @@ app: Final = FastAPI(
     lifespan=lifespan,
 )
 
+Instrumentator().instrument(app).expose(app)
 
 # --------------------------------------------------------
 # R O U T E R S
