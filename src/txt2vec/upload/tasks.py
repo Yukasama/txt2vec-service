@@ -15,8 +15,8 @@ from txt2vec.ai_model.models import ModelSource
 from txt2vec.ai_model.repository import save_ai_model_db
 from txt2vec.common.task_status import TaskStatus
 from txt2vec.upload.exceptions import ModelAlreadyExistsError
-from txt2vec.upload.huggingface_service import load_model_and_cache_only
-from txt2vec.upload.repository import update_upload_task_status
+from txt2vec.upload.huggingface_service import load_hf_model_svc
+from txt2vec.upload.repository import update_upload_task_status_db
 
 
 async def process_huggingface_model_background(
@@ -43,7 +43,7 @@ async def process_huggingface_model_background(
 
     try:
         logger.info("[BG] Starting model upload for task", taskId=task_id)
-        await load_model_and_cache_only(model_tag, revision)
+        await load_hf_model_svc(model_tag, revision)
 
         ai_model = AIModel(
             model_tag=key,
@@ -51,25 +51,25 @@ async def process_huggingface_model_background(
             source=ModelSource.HUGGINGFACE,
         )
         await save_ai_model_db(db, ai_model)
-        await update_upload_task_status(db, task_id, TaskStatus.DONE)
+        await update_upload_task_status_db(db, task_id, TaskStatus.DONE)
 
         logger.info("[BG] Task completed successfully", taskId=task_id)
 
     except ModelAlreadyExistsError as e:
         logger.error(f"[BG] Model already exists for task {task_id}: {e}")
         await db.rollback()
-        await update_upload_task_status(
+        await update_upload_task_status_db(
             db, task_id, TaskStatus.FAILED, error_msg=str(e)
         )
     except IntegrityError as e:
         logger.error(f"[BG] IntegrityError in task {task_id}: {e}")
         await db.rollback()
-        await update_upload_task_status(
+        await update_upload_task_status_db(
             db, task_id, TaskStatus.FAILED, error_msg=str(e)
         )
     except Exception as e:
         logger.error(f"[BG] Error in task {task_id}: {e}")
         await db.rollback()
-        await update_upload_task_status(
+        await update_upload_task_status_db(
             db, task_id, TaskStatus.FAILED, error_msg=str(e)
         )

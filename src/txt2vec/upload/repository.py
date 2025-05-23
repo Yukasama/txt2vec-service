@@ -16,7 +16,7 @@ from txt2vec.common.task_status import TaskStatus
 from txt2vec.upload.models import UploadTask
 
 
-async def save_upload_task(db: AsyncSession, task: UploadTask) -> None:
+async def save_upload_task_db(db: AsyncSession, task: UploadTask) -> None:
     """Saves a new upload task to the database.
 
     Args:
@@ -28,7 +28,7 @@ async def save_upload_task(db: AsyncSession, task: UploadTask) -> None:
     await db.refresh(task)
 
 
-async def update_upload_task_status(
+async def update_upload_task_status_db(
     db: AsyncSession,
     task_id: UUID,
     status: TaskStatus,

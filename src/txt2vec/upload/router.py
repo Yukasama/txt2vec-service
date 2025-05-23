@@ -29,7 +29,7 @@ from txt2vec.datasets.exceptions import InvalidFileError
 from txt2vec.upload.exceptions import ModelAlreadyExistsError
 from txt2vec.upload.github_service import handle_model_download
 from txt2vec.upload.models import UploadTask
-from txt2vec.upload.repository import save_upload_task
+from txt2vec.upload.repository import save_upload_task_db
 from txt2vec.upload.schemas import GitHubModelRequest, HuggingFaceModelRequest
 from txt2vec.upload.tasks import process_huggingface_model_background
 from txt2vec.upload.zip_service import upload_zip_model
@@ -86,7 +86,7 @@ async def load_model_huggingface(
         task_status=TaskStatus.PENDING,
         source=ModelSource.HUGGINGFACE,
     )
-    await save_upload_task(db, upload_task)
+    await save_upload_task_db(db, upload_task)
 
     background_tasks.add_task(
         process_huggingface_model_background,
