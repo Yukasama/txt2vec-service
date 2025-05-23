@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 
+
 class TrainRequest(BaseModel):
     model_tag: str = Field(..., description="Tag des Modells (lokal oder Huggingface)")
     dataset_path: str = Field(..., description="Pfad zum Trainingsdatensatz (lokal)")

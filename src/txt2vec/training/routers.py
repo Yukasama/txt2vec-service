@@ -1,7 +1,9 @@
 """Router Initializer für Training."""
 
 from fastapi import APIRouter, FastAPI
+
 from txt2vec.training.router import router as training_router
+
 
 def register_training_routers(app: FastAPI) -> None:
     """Register only the training API routers with the FastAPI application."""

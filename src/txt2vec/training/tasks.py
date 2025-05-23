@@ -1,13 +1,18 @@
-from .schemas import TrainRequest
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, Trainer, TrainingArguments
-from datasets import load_dataset
-import os
-import time
 from pathlib import Path
 
+from datasets import load_dataset
+from transformers import (
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
+    Trainer,
+    TrainingArguments,
+)
+
+from .schemas import TrainRequest
+
+
 def train_model_task(train_request: TrainRequest):
-    """
-    Trainingslogik für lokale oder Huggingface-Modelle.
+    """Trainingslogik für lokale oder Huggingface-Modelle.
     Lädt Modell und Datensatz, startet Training mit Huggingface Trainer.
     Speichert trainierte Modelle unter data/models/trained_models.
     """

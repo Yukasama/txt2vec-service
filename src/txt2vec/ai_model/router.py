@@ -14,6 +14,7 @@ from loguru import logger
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from txt2vec.config.db import get_session
+
 from .models import AIModelPublic, AIModelUpdate
 from .service import delete_model_svc, get_ai_model_svc, update_ai_model_svc
 
