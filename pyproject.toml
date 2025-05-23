@@ -66,6 +66,8 @@ dependencies = [
     "prometheus-fastapi-instrumentator>=7.1.0",
     "loki-logger-handler>=1.1.1",
     "loki-handler>=0.1.1",
+    "datasets>=3.6.0",
+    "accelerate>=0.26.0",
 ]
 
 [project.scripts]
