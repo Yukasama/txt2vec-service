@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlmodel import Column, DateTime, Field, Relationship, SQLModel, func
+from pydantic import BaseModel, Field as PydanticField
 
 from .model_source import ModelSource
 

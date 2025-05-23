@@ -47,7 +47,7 @@ async def load_hf_model_svc(model_tag: str, revision: str) -> None:  # noqa: RUF
         snapshot_path = snapshot_download(
             repo_id=model_tag,
             revision=revision,
-            cache_dir="data/models",
+            cache_dir="data/models/uploaded_models",
             allow_patterns=["*.safetensors", "*.json"],
         )
 
