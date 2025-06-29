@@ -16,3 +16,4 @@ volumes:
   models_data:
   db_data:
   hf_home_data:
+  cache_data:
