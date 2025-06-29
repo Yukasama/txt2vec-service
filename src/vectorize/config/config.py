@@ -263,7 +263,7 @@ class Settings(BaseSettings):
         """Directory for storing model files used during inference."""
         if self.app_env == "testing":
             return Path("test_data/inference")
-        return Path(_model_config.get("model_upload_dir"))
+        return Path(_model_config.get("upload_dir"))
 
     @computed_field
     @property

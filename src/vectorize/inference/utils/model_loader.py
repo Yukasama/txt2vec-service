@@ -33,6 +33,80 @@ _COMMON_MODEL_KWARGS = {
 }
 
 
+def _find_model_path(model_tag: str) -> Path:
+    """Find the actual model path, handling both flat and HuggingFace cache structures.
+    
+    Args:
+        model_tag: Name of the model directory to find
+        
+    Returns:
+        Path to the model directory
+        
+    Raises:
+        ModelNotFoundError: If no valid model path is found
+    """
+    base_dir = Path(settings.model_inference_dir)
+    
+    # Try standard flat structure first
+    folder = base_dir / model_tag
+    if folder.exists() and (folder / "config.json").exists():
+        logger.debug(f"[MODEL LOADER] Found model at standard path: {folder}")
+        return folder
+    
+    # Try HuggingFace cache structure: models--{org}--{model}
+    hf_folder_name = model_tag.replace("_", "--").replace("/", "--")
+    if not hf_folder_name.startswith("models--"):
+        hf_folder_name = f"models--{hf_folder_name}"
+    
+    hf_folder = base_dir / hf_folder_name
+    logger.debug(f"[MODEL LOADER] Checking HF cache path: {hf_folder}")
+    
+    if hf_folder.exists():
+        # Look for snapshots directory
+        snapshots_dir = hf_folder / "snapshots"
+        if snapshots_dir.exists():
+            # Find the most recent snapshot (or any snapshot)
+            snapshot_dirs = [d for d in snapshots_dir.iterdir() if d.is_dir()]
+            if snapshot_dirs:
+                # Take the first snapshot (could be improved to take latest)
+                snapshot_path = snapshot_dirs[0]
+                if (snapshot_path / "config.json").exists():
+                    logger.debug(f"[MODEL LOADER] Found model at HF snapshot: {snapshot_path}")
+                    return snapshot_path
+    
+    # Try alternative HuggingFace naming patterns
+    alt_patterns = [
+        f"models--{model_tag.replace('/', '--')}",
+        f"models--{model_tag.replace('_', '--')}",
+        model_tag.replace("_", "/"),
+    ]
+    
+    for pattern in alt_patterns:
+        alt_folder = base_dir / pattern
+        if alt_folder.exists():
+            if (alt_folder / "config.json").exists():
+                logger.debug(f"[MODEL LOADER] Found model at alternative path: {alt_folder}")
+                return alt_folder
+            # Check for snapshots in alternative path
+            snapshots_dir = alt_folder / "snapshots"
+            if snapshots_dir.exists():
+                snapshot_dirs = [d for d in snapshots_dir.iterdir() if d.is_dir()]
+                if snapshot_dirs:
+                    snapshot_path = snapshot_dirs[0]
+                    if (snapshot_path / "config.json").exists():
+                        logger.debug(f"[MODEL LOADER] Found model at alt snapshot: {snapshot_path}")
+                        return snapshot_path
+    
+    # If nothing found, raise error
+    logger.error(f"[MODEL LOADER] Model not found. Searched paths:")
+    logger.error(f"  - Standard: {folder}")
+    logger.error(f"  - HF Cache: {hf_folder}")
+    for pattern in alt_patterns:
+        logger.error(f"  - Alternative: {base_dir / pattern}")
+    
+    raise ModelNotFoundError(model_tag)
+
+
 @lru_cache(maxsize=10)
 def _load_model(model_tag: str) -> tuple[torch.nn.Module, AutoTokenizer | None]:
     """Load a Hugging Face model and its tokenizer from a checkpoint directory.
@@ -52,10 +126,8 @@ def _load_model(model_tag: str) -> tuple[torch.nn.Module, AutoTokenizer | None]:
         ModelNotFoundError: If the model directory doesn't exist
         ModelLoadError: If the model can't be successfully loaded
     """
-    folder = Path(settings.model_inference_dir) / model_tag
-    if not folder.exists():
-        raise ModelNotFoundError(model_tag)
-
+    folder = _find_model_path(model_tag)
+    
     try:
         cfg = AutoConfig.from_pretrained(folder)
     except Exception as exc:
