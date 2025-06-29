@@ -1,6 +1,6 @@
 # Upload API
 
-he upload module provides model upload capabilities from various sources including Hugging Face, GitHub, and local files.
+The upload module provides model upload capabilities from various sources including Hugging Face, GitHub, and local files.
 
 ## API Endpoints
 
@@ -8,7 +8,7 @@ he upload module provides model upload capabilities from various sources includi
 
 ### HuggingFace Service
 
-::: vectorize.upload.hTuggingface_service
+::: vectorize.upload.huggingface_service
 
 ### Local Service
 
