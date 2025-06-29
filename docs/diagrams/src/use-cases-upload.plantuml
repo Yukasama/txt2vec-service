@@ -1,21 +1,37 @@
 @startuml use-cases-uploads
 left to right direction
-actor Nutzer
+skinparam actorStyle awesome
 
-package "Modelle hochladen" {
-    usecase "Hugging Face Modell anhand Tag laden" as HFModellLaden
-    usecase "Lokale Dateien hochladen" as LokaleDateien
-    usecase "GitHub Repo anhand URL laden" as GitHubRepoLaden
+actor User
+
+package "Model Upload Service" {
+    usecase UC_Github as "Upload GitHub Model"
+    usecase UC_HF as "Upload HuggingFace Model"
+    usecase UC_Zip as "Upload ZIP Archive"
+
+    usecase UC_CreateTask as "Create Upload Task"
+    usecase UC_BGProcess as "Background Process Upload"
+    usecase UC_SaveDB as "Save Model to DB"
+    usecase UC_ValidateFiles as "Validate Model Files"
+    usecase UC_CacheModel as "Cache Model Locally"
 }
 
-package "Modelle verwalten" {
-    usecase "Modell umbenennen" as ModellUmbenennen
-    usecase "Modell löschen" as ModellLöschen
-}
+User --> UC_Github : Request upload\n(owner, repo, branch)
+User --> UC_HF : Request upload\n(model_tag, revision)
+User --> UC_Zip : Upload ZIP file\n(optional base name)
 
-Nutzer --> HFModellLaden
-Nutzer --> LokaleDateien
-Nutzer --> GitHubRepoLaden
-Nutzer --> ModellUmbenennen
-Nutzer --> ModellLöschen
+UC_Github --> UC_CreateTask
+UC_HF --> UC_CreateTask
+UC_Zip --> UC_CreateTask
+
+UC_CreateTask --> UC_BGProcess
+
+UC_BGProcess --> UC_ValidateFiles
+UC_BGProcess --> UC_CacheModel
+UC_BGProcess --> UC_SaveDB
+
+UC_ValidateFiles --> UC_BGProcess : success or fail
+UC_CacheModel --> UC_BGProcess : success or fail
+UC_SaveDB --> UC_BGProcess : success or fail
+
 @enduml

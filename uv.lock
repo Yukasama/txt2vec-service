@@ -479,6 +479,15 @@ wheels = [
 ]
 
 [[package]]
+name = "eval-type-backport"
+version = "0.2.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/30/ea/8b0ac4469d4c347c6a385ff09dc3c048c2d021696664e26c7ee6791631b5/eval_type_backport-0.2.2.tar.gz", hash = "sha256:f0576b4cf01ebb5bd358d02314d31846af5e07678387486e2c798af0e7d849c1", size = 9079, upload-time = "2024-12-21T20:09:46.005Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ce/31/55cd413eaccd39125368be33c46de24a1f639f2e12349b0361b4678f3915/eval_type_backport-0.2.2-py3-none-any.whl", hash = "sha256:cb6ad7c393517f476f96d456d0412ea80f0a8cf96f6892834cd9340149111b0a", size = 5830, upload-time = "2024-12-21T20:09:44.175Z" },
+]
+
+[[package]]
 name = "fastapi"
 version = "0.115.14"
 source = { registry = "https://pypi.org/simple" }
@@ -1083,6 +1092,8 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/79/21/6e7c060822a3c954ff085e5e1b94b4a25757c06529eac91e550f3f5cd8b8/lxml-6.0.0-cp313-cp313-macosx_10_13_universal2.whl", hash = "sha256:6da7cd4f405fd7db56e51e96bff0865b9853ae70df0e6720624049da76bde2da", size = 8414372, upload-time = "2025-06-26T16:26:39.079Z" },
     { url = "https://files.pythonhosted.org/packages/a4/f6/051b1607a459db670fc3a244fa4f06f101a8adf86cda263d1a56b3a4f9d5/lxml-6.0.0-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:b34339898bb556a2351a1830f88f751679f343eabf9cf05841c95b165152c9e7", size = 4593940, upload-time = "2025-06-26T16:26:41.891Z" },
     { url = "https://files.pythonhosted.org/packages/8e/74/dd595d92a40bda3c687d70d4487b2c7eff93fd63b568acd64fedd2ba00fe/lxml-6.0.0-cp313-cp313-manylinux2010_i686.manylinux2014_i686.manylinux_2_12_i686.manylinux_2_17_i686.whl", hash = "sha256:51a5e4c61a4541bd1cd3ba74766d0c9b6c12d6a1a4964ef60026832aac8e79b3", size = 5214329, upload-time = "2025-06-26T16:26:44.669Z" },
+    { url = "https://files.pythonhosted.org/packages/52/46/3572761efc1bd45fcafb44a63b3b0feeb5b3f0066886821e94b0254f9253/lxml-6.0.0-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:d18a25b19ca7307045581b18b3ec9ead2b1db5ccd8719c291f0cd0a5cec6cb81", size = 4947559, upload-time = "2025-06-28T18:47:31.091Z" },
+    { url = "https://files.pythonhosted.org/packages/94/8a/5e40de920e67c4f2eef9151097deb9b52d86c95762d8ee238134aff2125d/lxml-6.0.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:d4f0c66df4386b75d2ab1e20a489f30dc7fd9a06a896d64980541506086be1f1", size = 5102143, upload-time = "2025-06-28T18:47:33.612Z" },
     { url = "https://files.pythonhosted.org/packages/7c/4b/20555bdd75d57945bdabfbc45fdb1a36a1a0ff9eae4653e951b2b79c9209/lxml-6.0.0-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:9f4b481b6cc3a897adb4279216695150bbe7a44c03daba3c894f49d2037e0a24", size = 5021931, upload-time = "2025-06-26T16:26:47.503Z" },
     { url = "https://files.pythonhosted.org/packages/d4/dd/39c8507c16db6031f8c1ddf70ed95dbb0a6d466a40002a3522c128aba472/lxml-6.0.0-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:2ae06fbab4f1bb7db4f7c8ca9897dc8db4447d1a2b9bee78474ad403437bcc29", size = 5247467, upload-time = "2025-06-26T16:26:49.998Z" },
     { url = "https://files.pythonhosted.org/packages/4d/56/732d49def0631ad633844cfb2664563c830173a98d5efd9b172e89a4800d/lxml-6.0.0-cp313-cp313-manylinux_2_31_armv7l.whl", hash = "sha256:1fa377b827ca2023244a06554c6e7dc6828a10aaf74ca41965c5d8a4925aebb4", size = 4720601, upload-time = "2025-06-26T16:26:52.564Z" },
@@ -1336,6 +1347,31 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/bc/66/36c78af2efaffcc15a5a61ae0df53a1d025f2680122e2a9eb8442fed3ae4/msgpack-1.1.1-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:4147151acabb9caed4e474c3344181e91ff7a388b888f1e19ea04f7e73dc7ad5", size = 424172, upload-time = "2025-06-13T06:52:25.704Z" },
     { url = "https://files.pythonhosted.org/packages/8c/87/a75eb622b555708fe0427fab96056d39d4c9892b0c784b3a721088c7ee37/msgpack-1.1.1-cp313-cp313-win32.whl", hash = "sha256:500e85823a27d6d9bba1d057c871b4210c1dd6fb01fbb764e37e4e8847376323", size = 65347, upload-time = "2025-06-13T06:52:26.846Z" },
     { url = "https://files.pythonhosted.org/packages/ca/91/7dc28d5e2a11a5ad804cf2b7f7a5fcb1eb5a4966d66a5d2b41aee6376543/msgpack-1.1.1-cp313-cp313-win_amd64.whl", hash = "sha256:6d489fba546295983abd142812bda76b57e33d0b9f5d5b71c09a583285506f69", size = 72341, upload-time = "2025-06-13T06:52:27.835Z" },
+]
+
+[[package]]
+name = "mteb"
+version = "1.38.33"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "datasets" },
+    { name = "eval-type-backport" },
+    { name = "numpy" },
+    { name = "polars" },
+    { name = "pydantic" },
+    { name = "pytrec-eval-terrier" },
+    { name = "requests" },
+    { name = "rich" },
+    { name = "scikit-learn" },
+    { name = "scipy" },
+    { name = "sentence-transformers" },
+    { name = "torch" },
+    { name = "tqdm" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/52/93/808612780e35d67d5b411ebf0c2c64c7ce05c0bc9c66c1dafe902768be57/mteb-1.38.33.tar.gz", hash = "sha256:3a8ffc833a263d8a3db03614a1de1dc98e87943c4d644f5fdb2958bfa056ced2", size = 979861, upload-time = "2025-06-27T21:09:28.141Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/42/29/91a79c2834d56f126e44bb656d99e3db04092390822f0b1b9c302a447d0b/mteb-1.38.33-py3-none-any.whl", hash = "sha256:73fc7b6308caca80b045897621b5ec6c2a04151f34fcd9343b96b9c85a709f2a", size = 1606927, upload-time = "2025-06-27T21:09:25.209Z" },
 ]
 
 [[package]]
@@ -2114,6 +2150,18 @@ wheels = [
 client = [
     { name = "requests" },
     { name = "websocket-client" },
+]
+
+[[package]]
+name = "pytrec-eval-terrier"
+version = "0.5.7"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/dc/61/9003ffdb64f74a91208d69235dbcd380ae1a8d267089348eb8f7aab9819a/pytrec_eval_terrier-0.5.7.tar.gz", hash = "sha256:47e01ef52bfbe2f1df27c43842aa2faae542044e550983cd1a3100a4d9f62b48", size = 16935, upload-time = "2025-04-03T19:59:37.565Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f4/08/f83120cb75a263ea350e1ee9ce033236227991593d4c4aa348653dcba120/pytrec_eval_terrier-0.5.7-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:31dbeb8710b31850efd67cc0722aee27586be05b7de50b5d2ae2debd02f65031", size = 288598, upload-time = "2025-04-03T20:36:42.471Z" },
+    { url = "https://files.pythonhosted.org/packages/ff/26/ca041f6e8b902bd0f8e9a764c3a64fb1895dfc145e147810ea81ae6691f6/pytrec_eval_terrier-0.5.7-cp313-cp313-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:28d0694097558e49523f8838cd06b798ce70fe3170e6dca5efc7b8c804208e4e", size = 280915, upload-time = "2025-04-03T20:36:43.465Z" },
+    { url = "https://files.pythonhosted.org/packages/db/fd/6fcc5dc269025861bad241ec3184083144a320953fc8ca31957915a1462a/pytrec_eval_terrier-0.5.7-cp313-cp313-musllinux_1_2_i686.whl", hash = "sha256:9f7044881762b0b3cd769d6e84b58bf6b9daa06f61ef2bd026cac04c37b5d335", size = 1425766, upload-time = "2025-04-03T20:36:44.797Z" },
+    { url = "https://files.pythonhosted.org/packages/2d/8c/8a7f303e5c59d165640da986099c8ea50b8cfc4859227fef77041b3cc625/pytrec_eval_terrier-0.5.7-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:04052c4a5e450c04d40ffd31f39b91ea11730dd6031944a5c2c90b084c4cc11a", size = 1326679, upload-time = "2025-04-03T20:36:45.855Z" },
 ]
 
 [[package]]
@@ -2941,6 +2989,7 @@ dependencies = [
     { name = "loguru" },
     { name = "loki-logger-handler" },
     { name = "lxml" },
+    { name = "mteb" },
     { name = "numpy" },
     { name = "openpyxl" },
     { name = "orjson" },
@@ -2998,6 +3047,7 @@ requires-dist = [
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "loki-logger-handler", specifier = ">=1.1.1" },
     { name = "lxml", specifier = ">=5.3.2" },
+    { name = "mteb", specifier = ">=1.38.33" },
     { name = "numpy", specifier = ">=2.2.4" },
     { name = "openpyxl", specifier = ">=3.1.5" },
     { name = "orjson", specifier = ">=3.10.18" },

@@ -1,21 +1,23 @@
 @startuml use-cases-evaluation
 left to right direction
-actor Nutzer
+skinparam actorStyle awesome
+actor User
 
-package "Modell evaluieren" {
-    usecase "Evaluation starten" as EvaluationStarten
-    usecase "Evaluation-Status abfragen" as StatusAbfragen
-    usecase "Baseline-Vergleich durchführen" as BaselineVergleich
+package "Model Evaluation" {
+    usecase StartEvaluation as "Start Evaluation"
+    usecase CheckEvaluationStatus as "Check Evaluation Status"
+    usecase CompareWithBaseline as "Compare with Baseline Model"
 }
 
-package "Evaluation-Daten verwalten" {
-    usecase "Evaluation-Dataset auswählen" as DatasetAuswählen
-    usecase "Training-Task für Validation nutzen" as TrainingTaskNutzen
+package "Evaluation Dataset Management" {
+    usecase SelectEvaluationDataset as "Select Evaluation Dataset"
+    usecase UseTrainingValidationDataset as "Use Training Validation Dataset"
 }
 
-Nutzer --> EvaluationStarten
-Nutzer --> StatusAbfragen
-Nutzer --> BaselineVergleich
-Nutzer --> DatasetAuswählen
-Nutzer --> TrainingTaskNutzen
+User --> StartEvaluation
+User --> CheckEvaluationStatus
+User --> CompareWithBaseline
+User --> SelectEvaluationDataset
+User --> UseTrainingValidationDataset
+
 @enduml

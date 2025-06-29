@@ -13,7 +13,12 @@ from vectorize.evaluation.exceptions import EvaluationModelNotFoundError
 from vectorize.task.task_status import TaskStatus
 from vectorize.training.exceptions import TrainingDatasetNotFoundError
 
+from .repository import (
+    update_evaluation_task_results_db,
+    update_evaluation_task_status_db,
+)
 from .schemas import EvaluationRequest
+from .service import EvaluationService
 from .utils import (
     EvaluationDatabaseManager,
     EvaluationDatasetResolver,
@@ -176,4 +181,32 @@ async def run_evaluation_bg(
                     await db_manager.handle_evaluation_error(e)
             except Exception:
                 logger.error("Failed to update task status to FAILED", task_id=task_id)
+            raise
+
+
+@dramatiq.actor(max_retries=3)
+async def run_mteb_benchmark_bg(model_tag: str, task_id: str) -> None:
+
+    async with AsyncSession(engine, expire_on_commit=False) as db:
+        try:
+            await update_evaluation_task_status_db(db, UUID(task_id), TaskStatus.QUEUED,
+             progress=0.0)
+            service = EvaluationService(db)
+            results = await service.run_benchmark(model_tag)
+
+            await update_evaluation_task_results_db(
+                db,
+                UUID(task_id),
+                evaluation_metrics=json.dumps(results),
+                evaluation_summary=f"MTEB benchmark completed for model {model_tag}"
+            )
+            await update_evaluation_task_status_db(db, UUID(task_id), TaskStatus.DONE,
+             progress=1.0)
+            logger.info(f"MTEB benchmark completed for task {task_id}")
+        except Exception as e:
+            logger.error("MTEB benchmark failed for task {}: {}", task_id, str(e)
+            , exc_info=True)
+            await update_evaluation_task_status_db(
+                db, UUID(task_id), TaskStatus.FAILED, error_msg=str(e), progress=1.0
+            )
             raise

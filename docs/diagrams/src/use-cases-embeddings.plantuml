@@ -1,14 +1,22 @@
 @startuml use-cases-embeddings
 left to right direction
-actor Nutzer
+skinparam actorStyle awesome
+actor User
 
-package "Embeddings von Modellen abfragen" {
-    usecase "Liste verfügbarer Modelle abrufen" as ListeModelleAbrufen
-    usecase "Schnelles aufrufen viel verwendeter Modelle" as CachingModelle
-    usecase "Häufig verwendete Modelle im Cache speichern" as ModellAusCacheLaden
+package "Embedding Model Service" {
+    usecase ListAvailableModels as "List Available Models"
+    usecase CachePopularModels as "Cache Frequently Used Models"
+    usecase LoadModelsFromCache as "Load Models from Cache"
+    usecase GenerateEmbeddings as "Generate Embeddings for Input"
+    usecase TrackInferenceCount as "Track Model Usage Statistics"
+    usecase GetModelStats as "Get Daily Inference Stats"
 }
 
-Nutzer --> ListeModelleAbrufen
-Nutzer --> CachingModelle
-CachingModelle ..> ModellAusCacheLaden : <<includes>>
+User --> ListAvailableModels
+User --> GenerateEmbeddings
+User --> GetModelStats
+
+CachePopularModels ..> LoadModelsFromCache : <<includes>>
+GenerateEmbeddings --> TrackInferenceCount
+
 @enduml

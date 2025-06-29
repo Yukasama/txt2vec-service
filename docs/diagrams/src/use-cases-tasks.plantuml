@@ -1,14 +1,15 @@
 @startuml use-cases-tasks
 left to right direction
+skinparam actorStyle awesome
 actor User
 
 package "Task Monitoring" {
-    usecase "Get All Tasks\nwith Filters" as GetTasks
-    usecase "Filter by Task Type\n(upload, training, evaluation)" as FilterByType
-    usecase "Filter by Status\n(running, done, failed)" as FilterByStatus
-    usecase "Filter by Time Window\n(within hours)" as FilterByTime
-    usecase "Filter by Tag\n(custom labels)" as FilterByTag
-    usecase "Paginate Results\n(limit/offset)" as Paginate
+    usecase GetTasks as "Get All Tasks\nwith Filters"
+    usecase FilterByType as "Filter by Task Type\n(model_upload, training, etc.)"
+    usecase FilterByStatus as "Filter by Status\n(queued, running, done, failed)"
+    usecase FilterByTime as "Filter by Time Window\n(within hours)"
+    usecase FilterByTag as "Filter by Tag\n(custom labels)"
+    usecase Paginate as "Paginate Results\n(limit / offset)"
 }
 
 User --> GetTasks

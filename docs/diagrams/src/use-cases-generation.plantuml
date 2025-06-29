@@ -1,14 +1,32 @@
-@startuml use-cases-generation
+@startuml use-cases-synthesis
 left to right direction
-actor Nutzer
+skinparam actorStyle awesome
+actor User
 
-package "Daten generieren" {
-    usecase "Synthetische Daten generieren" as SynthetischeDaten
-    usecase "Satz-Duple/Tripel aus verschiedenen Formaten generieren" as SatzGenerieren
-    usecase "Bilder oder PDFs verwenden" as BilderoderPdfsVerwenden
+package "Synthetic Data Generation" {
+    usecase UploadMedia as "Upload Media Files\n(images, PDFs)"
+    usecase UseExistingDataset as "Use Existing Dataset\nfor Synthesis"
+    usecase MonitorTaskStatus as "Monitor Synthesis Task Status"
+    usecase ListSynthesisTasks as "List Synthesis Tasks\n(with Pagination)"
 }
 
-Nutzer --> SynthetischeDaten
-Nutzer --> SatzGenerieren
-Nutzer --> BilderoderPdfsVerwenden
+package "Background Processing" {
+    usecase ProcessMediaFiles as "Process Media Files\nExtract Text & Generate Dataset"
+    usecase ProcessExistingDataset as "Process Existing Dataset\nExtract Text & Generate Dataset"
+    usecase UpdateTaskStatus as "Update Task Status\n(done, failed)"
+}
+
+User --> UploadMedia : Upload files
+User --> UseExistingDataset : Provide dataset ID
+User --> MonitorTaskStatus : Query task status
+User --> ListSynthesisTasks : List recent tasks
+
+UploadMedia --> ProcessMediaFiles : Creates task, runs background job
+UseExistingDataset --> ProcessExistingDataset : Creates task, runs background job
+
+ProcessMediaFiles --> UpdateTaskStatus
+ProcessExistingDataset --> UpdateTaskStatus
+
+UpdateTaskStatus --> MonitorTaskStatus : Reflect current status
+
 @enduml
