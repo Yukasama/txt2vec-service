@@ -1,10 +1,13 @@
 """Evaluation tasks using Dramatiq for background processing."""
 
 import json
+import traceback
 from pathlib import Path
 from uuid import UUID
 
 import dramatiq
+import pkg_resources
+import torch
 from loguru import logger
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -25,7 +28,7 @@ from .utils import (
 )
 from .utils.evaluation_engine import EvaluationEngine
 
-__all__ = ["run_evaluation_bg"]
+__all__ = ["run_evaluation_bg", "run_mteb_benchmark_bg"]
 
 
 async def _run_baseline_evaluation(
@@ -186,26 +189,45 @@ async def run_evaluation_bg(
 
 @dramatiq.actor(max_retries=3)
 async def run_mteb_benchmark_bg(model_tag: str, task_id: str) -> None:
-
+    """Run MTEB benchmark in the background using Dramatiq."""
     async with AsyncSession(engine, expire_on_commit=False) as db:
         try:
-            await update_evaluation_task_status_db(db, UUID(task_id), TaskStatus.QUEUED,
-             progress=0.0)
+            logger.info(
+                "Starting MTEB benchmark task {task_id} for model {model_tag}",
+                task_id=task_id,
+                model_tag=model_tag,
+            )
+            logger.info("PyTorch version {version}", version=torch.__version__)
+            logger.info("MTEB version {version}", version=pkg_resources.get_distribution("mteb").version)
+            logger.info("Sentence-Transformers version {version}", version=pkg_resources.get_distribution("sentence-transformers").version)
+            logger.info("Datasets version {version}", version=pkg_resources.get_distribution("datasets").version)
+            cuda_available = torch.cuda.is_available()
+            logger.info("CUDA available {cuda}", cuda=cuda_available)
+            if cuda_available:
+                logger.info("CUDA device {device}", device=torch.cuda.get_device_name(0))
+
+            await update_evaluation_task_status_db(db, UUID(task_id), TaskStatus.QUEUED, progress=0.0)
             service = EvaluationService(db)
-            results = await service.run_benchmark(model_tag)
+            logger.debug("Calling run_benchmark for model_tag {model_tag}", model_tag=model_tag)
+            results = service.run_benchmark(model_tag)
+            logger.debug("Received results from run_benchmark of type {type}", type=type(results))
 
             await update_evaluation_task_results_db(
                 db,
                 UUID(task_id),
                 evaluation_metrics=json.dumps(results),
-                evaluation_summary=f"MTEB benchmark completed for model {model_tag}"
+                evaluation_summary=f"MTEB benchmark completed for model {model_tag}",
             )
-            await update_evaluation_task_status_db(db, UUID(task_id), TaskStatus.DONE,
-             progress=1.0)
-            logger.info(f"MTEB benchmark completed for task {task_id}")
+            await update_evaluation_task_status_db(db, UUID(task_id), TaskStatus.DONE, progress=1.0)
+            logger.info("MTEB benchmark completed successfully for task {task_id}", task_id=task_id)
         except Exception as e:
-            logger.error("MTEB benchmark failed for task {}: {}", task_id, str(e)
-            , exc_info=True)
+            tb_str = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+            logger.error(
+                "MTEB benchmark failed for task {task_id}: {error}\nStack trace:\n{trace}",
+                task_id=task_id,
+                error=str(e),
+                trace=tb_str,
+            )
             await update_evaluation_task_status_db(
                 db, UUID(task_id), TaskStatus.FAILED, error_msg=str(e), progress=1.0
             )
