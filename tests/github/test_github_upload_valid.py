@@ -13,32 +13,32 @@ _BRANCH_DIFF = "DifferentBranch-Full"
 
 @pytest.mark.github
 def test_load_bogus_model_tag(client: TestClient) -> None:
-    """Test uploading a model with a specific tag succeeds."""
+    """Tests the main branch upload."""
     payload_main = {
         "owner": _REPO_OWNER,
         "repo_name": _REPO_NAME,
         "tag": _BRANCH_DEFAULT
     }
 
-    response_main = client.post("/uploads/github", json=payload_main)
+    response_main = client.post("uploads/github", json=payload_main)
     assert response_main.status_code == status.HTTP_201_CREATED
 
 
 @pytest.mark.github
 def test_load_bogus_model_branch_tag(client: TestClient) -> None:
-    """Test uploading a model with a non-default branch tag succeeds."""
+    """Tests different branch upload."""
     payload = {
         "owner": _REPO_OWNER,
         "repo_name": _REPO_NAME,
         "tag": _BRANCH_DIFF
     }
-    response = client.post("/uploads/github", json=payload)
+    response = client.post("uploads/github", json=payload)
     assert response.status_code == status.HTTP_201_CREATED
 
 
 @pytest.mark.github
 def test_load_bogus_model_without_tag(client: TestClient) -> None:
-    """Test uploading a model without specifying a tag defaults to main."""
+    """Tests that a model can be uploaded without specifying a tag."""
     payload = {
         "owner": _REPO_OWNER,
         "repo_name": _REPO_NAME
@@ -49,7 +49,7 @@ def test_load_bogus_model_without_tag(client: TestClient) -> None:
 
 @pytest.mark.github
 def test_load_bogus_model_empty_tag(client: TestClient) -> None:
-    """Test uploading a model with an empty tag is treated as main."""
+    """Tests that an empty tag string is treated like 'main'."""
     payload = {
         "owner": _REPO_OWNER,
         "repo_name": _REPO_NAME,
