@@ -11,6 +11,7 @@ from vectorize.common.exceptions import VersionMismatchError
 
 from .exceptions import ModelNotFoundError, NoModelFoundError
 from .models import AIModel, AIModelUpdate
+from .utils.model_deletion import remove_model_from_memory
 
 __all__ = [
     "delete_model_db",
@@ -156,3 +157,4 @@ async def delete_model_db(db: AsyncSession, model_id: UUID) -> None:
     await db.delete(model)
     await db.commit()
     logger.debug("Model deleted", model=model)
+    await remove_model_from_memory(model.model_tag)
