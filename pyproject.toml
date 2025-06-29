@@ -72,8 +72,7 @@ dependencies = [
     "dramatiq>=1.18.0",
     "redis>=6.2.0",
     "sentence-transformers>=4.1.0",
-    "accelerate>=1.7.0",
-    "mteb>=1.38.33",
+    "accelerate>=1.7.0"
 ]
 
 [project.scripts]
