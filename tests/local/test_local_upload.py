@@ -5,6 +5,7 @@
 from pathlib import Path
 from uuid import UUID
 
+import aiofiles
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
@@ -13,7 +14,6 @@ from tests.utils import get_test_zip_file
 from vectorize.config.config import settings
 
 
-@pytest.mark.asyncio
 @pytest.mark.upload
 class TestZipModelUpload:
     """Tests for uploading models via ZIP files."""
@@ -27,7 +27,7 @@ class TestZipModelUpload:
     _multiple_models_zip = _base_dir / "multiple_model.zip"
     _filtered_test_zip = _base_dir / "filtered_test_model.zip"
 
-    async def test_valid_zip_upload(self, client: TestClient) -> None:
+    def test_valid_zip_upload(self, client: TestClient) -> None:
         """Test uploading a valid ZIP file with model files."""
         files = get_test_zip_file(TestZipModelUpload._valid_zip)
 
@@ -54,12 +54,13 @@ class TestZipModelUpload:
         assert len(model_files) > 0, "Model directory should contain extracted files"
 
     @staticmethod
+    @pytest.mark.asyncio
     async def test_invalid_file_extension(client: TestClient) -> None:
         """Test uploading a file with an invalid extension."""
         invalid_file_path = TestZipModelUpload._base_dir / "invalid_file.txt"
         if not invalid_file_path.exists():
-            with invalid_file_path.open("w") as f:
-                f.write("This is not a ZIP file")
+            async with aiofiles.open(invalid_file_path, "w") as f:
+                await f.write("This is not a ZIP file")
 
         files = get_test_zip_file(invalid_file_path)
         response = client.post(
@@ -70,7 +71,7 @@ class TestZipModelUpload:
         assert response.json()["code"] == "INVALID_FILE"
 
     @staticmethod
-    async def test_empty_zip_upload(client: TestClient) -> None:
+    def test_empty_zip_upload(client: TestClient) -> None:
         """Test uploading an empty ZIP file."""
         files = get_test_zip_file(TestZipModelUpload._empty_zip)
 
@@ -84,7 +85,7 @@ class TestZipModelUpload:
         assert response.json()["code"] == "INVALID_FILE"
 
     @staticmethod
-    async def test_zip_without_models(client: TestClient) -> None:
+    def test_zip_without_models(client: TestClient) -> None:
         """Test uploading a ZIP file without valid model files."""
         files = get_test_zip_file(TestZipModelUpload._no_model_zip)
 
@@ -98,7 +99,7 @@ class TestZipModelUpload:
         assert response.json()["code"] == "INVALID_FILE"
 
     @staticmethod
-    async def test_duplicate_model(client: TestClient) -> None:
+    def test_duplicate_model(client: TestClient) -> None:
         """Test uploading a ZIP file with a copy of the model."""
         files = get_test_zip_file(TestZipModelUpload._duplicate_model_zip)
 
@@ -111,7 +112,7 @@ class TestZipModelUpload:
         assert response.json()["code"] == "MODEL_ALREADY_EXISTS"
 
     @classmethod
-    async def test_multiple_model(cls, client: TestClient) -> None:
+    def test_multiple_model(cls, client: TestClient) -> None:
         """Test uploading a ZIP file with a copy of the model."""
         files = get_test_zip_file(TestZipModelUpload._multiple_models_zip)
         file_count = 2
@@ -131,7 +132,7 @@ class TestZipModelUpload:
         assert len(response.json()["items"]) == models_length + file_count
 
     @staticmethod
-    async def test_file_filtering_extraction(client: TestClient) -> None:
+    def test_file_filtering_extraction(client: TestClient) -> None:
         """Test that only model files and JSON files are extracted from ZIP."""
         files = get_test_zip_file(TestZipModelUpload._filtered_test_zip)
 

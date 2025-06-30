@@ -1,10 +1,16 @@
 """Generate embeddings from a model output."""
 
+import base64
+import struct
 from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 import torch
 from loguru import logger
 from transformers import AutoTokenizer
+
+if TYPE_CHECKING:
+    from typing import Any
 
 from vectorize.ai_model.exceptions import ModelLoadError, UnsupportedModelError
 from vectorize.config import settings
@@ -17,6 +23,69 @@ __all__ = ["_generate_embeddings"]
 
 
 _DEVICE = torch.device(settings.inference_device)
+
+
+def _prepare_input_tensors(
+    item: str | list[int], tokenizer: AutoTokenizer | None, model_name: str
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Prepare input tensors from text or token array.
+
+    Args:
+        item: Input text string or token array
+        tokenizer: Tokenizer for text processing
+        model_name: Model name for error reporting
+
+    Returns:
+        Tuple of (input_ids, attention_mask) tensors
+
+    Raises:
+        ModelLoadError: If tokenizer is None for text input
+    """
+    if isinstance(item, list) and all(isinstance(tok, int) for tok in item):
+        ids = torch.tensor([item], device=_DEVICE)
+        attn = torch.ones_like(ids)
+    else:
+        if tokenizer is None:
+            raise ModelLoadError(model_name)
+
+        text_input = item if isinstance(item, str) else str(item)
+        enc = tokenizer(
+            text_input,
+            return_tensors="pt",
+            truncation=True,
+            max_length=128,
+            padding=False,
+        )
+        ids, attn = (
+            enc["input_ids"].to(_DEVICE),
+            enc["attention_mask"].to(_DEVICE),
+        )
+
+    return ids, attn
+
+
+def _format_embedding_output(
+    embedding: Iterable[float], encoding_format: str | None, dimensions: int | None
+) -> list[float] | str:
+    """Format embedding output according to requested format and dimensions.
+
+    Args:
+        embedding: Raw embedding values
+        encoding_format: Output format ("base64" or None for float list)
+        dimensions: Number of dimensions to truncate to (optional)
+
+    Returns:
+        Formatted embedding as list of floats or base64 string
+    """
+    emb = list(embedding)
+    if dimensions is not None:
+        emb = emb[:dimensions]
+
+    if encoding_format == "base64":
+        float_bytes = b"".join(struct.pack("f", x) for x in emb)
+        return base64.b64encode(float_bytes).decode("utf-8")
+
+    return emb
 
 
 def _generate_embeddings(
@@ -53,24 +122,7 @@ def _generate_embeddings(
     # Save resources and don't track gradients
     with torch.no_grad():
         for idx, item in enumerate(inputs):
-            if isinstance(item, list) and all(isinstance(tok, int) for tok in item):
-                ids = torch.tensor([item], device=_DEVICE)
-                attn = torch.ones_like(ids)
-            else:
-                if tokenizer is None:
-                    raise ModelLoadError(data.model)
-                enc = tokenizer(
-                    item if isinstance(item, str) else " ".join(map(str, item)),
-                    return_tensors="pt",
-                    truncation=True,
-                    max_length=128,
-                    padding=False,
-                )
-                ids, attn = (
-                    enc["input_ids"].to(_DEVICE),
-                    enc["attention_mask"].to(_DEVICE),
-                )
-
+            ids, attn = _prepare_input_tensors(item, tokenizer, data.model)
             total_toks += ids.size(1)
 
             out = model(
@@ -82,18 +134,19 @@ def _generate_embeddings(
             vec = _extract_embedding_vector(out, model, attn, ids)
 
             emb: Iterable[float] = vec.tolist()
-            if data.dimensions is not None:
-                emb = emb[: data.dimensions]
+            embedding_value = _format_embedding_output(
+                emb, data.encoding_format, data.dimensions
+            )
 
             results.append(
-                EmbeddingData(object="embedding", embedding=list(emb), index=idx)
+                EmbeddingData(object="embedding", embedding=embedding_value, index=idx)
             )
 
     return results, total_toks
 
 
 def _extract_embedding_vector(
-    model_output: any,  # type: ignore
+    model_output: "Any",  # noqa: ANN401
     model: torch.nn.Module,
     attn_mask: torch.Tensor,
     ids: torch.Tensor,
@@ -114,7 +167,6 @@ def _extract_embedding_vector(
     """
     vec = None
 
-    # Try extracting based on output type using match statement
     match model_output:
         case tensor if hasattr(tensor, "last_hidden_state"):
             vec = _mean_pool(tensor.last_hidden_state, attn_mask).squeeze(0)
@@ -148,7 +200,6 @@ def _extract_embedding_vector(
         ):
             vec = torch.tensor(list_output).to(_DEVICE)
 
-    # Try model-specific methods if output-based extraction failed
     if vec is None and hasattr(model, "encode") and callable(model.encode):
         encoded = model.encode(ids, attention_mask=attn_mask)
         vec = (

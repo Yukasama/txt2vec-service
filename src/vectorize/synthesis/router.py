@@ -14,6 +14,7 @@ from fastapi import (
 )
 from loguru import logger
 from sqlmodel.ext.asyncio.session import AsyncSession
+from starlette.datastructures import FormData
 
 from vectorize.config.db import get_session
 from vectorize.dataset.repository import get_dataset_db
@@ -35,8 +36,105 @@ __all__ = ["router"]
 router = APIRouter(tags=["Synthesis"])
 
 
+def _extract_dataset_id_from_form(form: FormData) -> UUID | None:
+    """Extract and validate dataset_id from form data."""
+    if "dataset_id" not in form:
+        return None
+
+    dataset_id_value = form["dataset_id"]
+    if not isinstance(dataset_id_value, str):
+        raise HTTPException(
+            status_code=422,
+            detail="dataset_id must be a string value, not a file.",
+        )
+
+    try:
+        return UUID(dataset_id_value)
+    except (ValueError, TypeError) as e:
+        raise HTTPException(
+            status_code=422,
+            detail="Invalid dataset_id format. Must be a valid UUID.",
+        ) from e
+
+
+def _extract_files_from_form(form: FormData) -> list[UploadFile]:
+    """Extract valid files from form data."""
+    files = []
+    for key, value in form.multi_items():
+        if (
+            key == "files"
+            and isinstance(value, UploadFile)
+            and value.filename
+            and value.size
+            and value.size > 0
+        ):
+            files.append(value)
+    return files
+
+
+async def _process_existing_dataset(
+    request: Request, db: AsyncSession, task: SynthesisTask, dataset_id: UUID
+) -> dict[str, str | UUID | int]:
+    """Process synthesis task using existing dataset."""
+    dataset_db = await get_dataset_db(db, dataset_id)
+    process_existing_dataset_background_bg.send(str(task.id), str(dataset_db.id))
+
+    logger.info(
+        "Synthesis task created using existing dataset.",
+        taskId=task.id,
+        datasetId=dataset_db.id,
+    )
+
+    return {
+        "message": (
+            "Synthetic task with existing dataset created, "
+            "processing in background."
+        ),
+        "task_id": task.id,
+        "status_url": str(
+            request.url_for("get_synthesis_task_info", task_id=task.id)
+        ),
+        "dataset_id": dataset_db.id,
+    }
+
+
+async def _read_file_contents(files: list[UploadFile]) -> list[tuple[str, bytes]]:
+    """Read contents from uploaded files."""
+    file_contents = []
+    for file in files:
+        try:
+            content = await file.read()
+            if content:
+                file_contents.append((file.filename, content))
+        except Exception as e:
+            logger.error(f"Error reading file {file.filename}: {e}")
+        finally:
+            await file.close()
+    return file_contents
+
+
+def _process_file_contents(
+    request: Request, task: SynthesisTask, file_contents: list[tuple[str, bytes]]
+) -> dict[str, str | UUID | int]:
+    """Process synthesis task using file contents."""
+    process_file_contents_background_bg.send(str(task.id), file_contents)
+
+    logger.info(
+        "Synthesis task created, starting background processing.",
+        taskId=task.id,
+        fileCount=len(file_contents),
+    )
+
+    return {
+        "message": "Media files upload accepted, processing in background.",
+        "task_id": task.id,
+        "status_url": str(request.url_for("get_synthesis_task_info", task_id=task.id)),
+        "file_count": len(file_contents),
+    }
+
+
 @router.post("/media", status_code=status.HTTP_202_ACCEPTED)
-async def upload_media_for_synthesis(  # noqa: PLR0912
+async def upload_media_for_synthesis(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_session)],
 ) -> dict[str, str | UUID | int]:
@@ -53,33 +151,8 @@ async def upload_media_for_synthesis(  # noqa: PLR0912
     """
     form = await request.form()
 
-    dataset_id = None
-    if "dataset_id" in form:
-        dataset_id_value = form["dataset_id"]
-        if isinstance(dataset_id_value, str):
-            try:
-                dataset_id = UUID(dataset_id_value)
-            except (ValueError, TypeError) as e:
-                raise HTTPException(
-                    status_code=422,
-                    detail="Invalid dataset_id format. Must be a valid UUID.",
-                ) from e
-        else:
-            raise HTTPException(
-                status_code=422,
-                detail="dataset_id must be a string value, not a file.",
-            )
-
-    files = []
-    for key, value in form.multi_items():
-        if (
-            key == "files"
-            and isinstance(value, UploadFile)
-            and value.filename
-            and value.size
-            and value.size > 0
-        ):
-            files.append(value)
+    dataset_id = _extract_dataset_id_from_form(form)
+    files = _extract_files_from_form(form)
 
     if not files and dataset_id is None:
         raise HTTPException(
@@ -90,38 +163,9 @@ async def upload_media_for_synthesis(  # noqa: PLR0912
     task = await save_synthesis_task(db, SynthesisTask())
 
     if dataset_id and not files:
-        dataset_db = await get_dataset_db(db, dataset_id)
-        process_existing_dataset_background_bg.send(str(task.id), str(dataset_db.id))
+        return await _process_existing_dataset(request, db, task, dataset_id)
 
-        logger.info(
-            "Synthesis task created using existing dataset.",
-            taskId=task.id,
-            datasetId=dataset_db.id,
-        )
-
-        return {
-            "message": (
-                "Synthetic task with existing dataset created, "
-                "processing in background."
-            ),
-            "task_id": task.id,
-            "status_url": str(
-                request.url_for("get_synthesis_task_info", task_id=task.id)
-            ),
-            "dataset_id": dataset_db.id,
-        }
-
-    file_contents = []
-    if files:
-        for file in files:
-            try:
-                content = await file.read()
-                if content:
-                    file_contents.append((file.filename, content))
-            except Exception as e:
-                logger.error(f"Error reading file {file.filename}: {e}")
-            finally:
-                await file.close()
+    file_contents = await _read_file_contents(files)
 
     if not file_contents:
         raise HTTPException(
@@ -129,20 +173,7 @@ async def upload_media_for_synthesis(  # noqa: PLR0912
             detail="No valid files provided or all files were empty.",
         )
 
-    process_file_contents_background_bg.send(str(task.id), file_contents)
-
-    logger.info(
-        "Synthesis task created, starting background processing.",
-        taskId=task.id,
-        fileCount=len(file_contents),
-    )
-
-    return {
-        "message": "Media files upload accepted, processing in background.",
-        "task_id": task.id,
-        "status_url": str(request.url_for("get_synthesis_task_info", task_id=task.id)),
-        "file_count": len(file_contents),
-    }
+    return _process_file_contents(request, task, file_contents)
 
 
 @router.get("/tasks/{task_id}", name="get_synthesis_task_info")

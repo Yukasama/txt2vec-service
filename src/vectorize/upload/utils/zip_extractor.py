@@ -1,10 +1,12 @@
 """Extraction utilities for model ZIP files."""
 
-import shutil
+import contextlib
 import tempfile
 import zipfile
 from pathlib import Path
+from uuid import uuid4
 
+import aiofiles
 from fastapi import UploadFile
 from loguru import logger
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -38,25 +40,30 @@ async def save_zip_to_temp(file: UploadFile) -> Path:
     Raises:
         ModelTooLargeError: If the file exceeds maximum upload size
     """
-    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-        temp_path = Path(temp_file.name)
+    # Create temporary file path
+    temp_dir = Path(tempfile.gettempdir())
+    temp_filename = f"{uuid4()}.zip"
+    temp_path = temp_dir / temp_filename
 
     size = 0
     chunk_size = 1024 * 1024
-    with Path.open(temp_path, "wb") as dest_file:
+
+    async with aiofiles.open(temp_path, "wb") as dest_file:
         while chunk := await file.read(chunk_size):
             size += len(chunk)
             if size > settings.model_max_upload_size:
-                Path.unlink(temp_path)
+                # Clean up partial file
+                with contextlib.suppress(Exception):
+                    temp_path.unlink(missing_ok=True)
                 raise ModelTooLargeError(size)
-            dest_file.write(chunk)
+            await dest_file.write(chunk)
 
     await file.seek(0)
 
     return temp_path
 
 
-def _extract_file_from_zip(
+async def _extract_file_from_zip(
     zip_ref: zipfile.ZipFile,
     file_path: str,
     target_path: Path,
@@ -80,11 +87,12 @@ def _extract_file_from_zip(
         final_target_path = target_path / relative_path
         final_target_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with (
-            zip_ref.open(file_path) as source,
-            Path.open(final_target_path, "wb") as target,
-        ):
-            shutil.copyfileobj(source, target)
+        with zip_ref.open(file_path) as source:
+            async with aiofiles.open(final_target_path, "wb") as target:
+                # Read and write in chunks for large files
+                chunk_size = 1024 * 1024  # 1MB chunks
+                while chunk := source.read(chunk_size):
+                    await target.write(chunk)
 
         logger.debug("Extracted {} to {}", file_path, final_target_path)
         return True
@@ -148,7 +156,7 @@ async def process_model_directory(
     common_prefix = _find_common_prefix(file_paths)
 
     for file_path in file_paths:
-        if _extract_file_from_zip(zip_ref, file_path, model_dir, common_prefix):
+        if await _extract_file_from_zip(zip_ref, file_path, model_dir, common_prefix):
             if common_prefix and file_path.startswith(common_prefix + "/"):
                 relative_path = file_path[len(common_prefix) + 1 :]
             else:
@@ -226,8 +234,12 @@ async def process_single_model(
         target_name = Path(file_info.filename).name
         target_path = model_dir / target_name
 
-        with zip_ref.open(file_info) as source, Path.open(target_path, "wb") as target:
-            shutil.copyfileobj(source, target)
+        with zip_ref.open(file_info) as source:
+            async with aiofiles.open(target_path, "wb") as target:
+                # Read and write in chunks for large files
+                chunk_size = 1024 * 1024  # 1MB chunks
+                while chunk := source.read(chunk_size):
+                    await target.write(chunk)
 
         extracted_files.append(target_path)
 

@@ -4,12 +4,9 @@
 
 import logging
 import shutil
-import tempfile
-from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
-import pytest
 import torch
 from fastapi import status
 from fastapi.testclient import TestClient
@@ -82,15 +79,3 @@ class RealModelLoader:
 def create_real_model_loader(model_tag: str) -> ModelLoader:
     """Create a model loader function for the given model tag."""
     return RealModelLoader(model_tag)
-
-
-@pytest.fixture
-def temp_cache_file() -> Generator[str]:
-    """Create temporary cache file."""
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".json", delete=False, encoding="utf-8"
-    ) as f:
-        cache_file = f.name
-    yield cache_file
-    if Path(cache_file).exists():
-        Path(cache_file).unlink()

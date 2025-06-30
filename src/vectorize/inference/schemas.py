@@ -18,7 +18,8 @@ class EmbeddingRequest(BaseModel):
     )
 
     model: str = Field(
-        description="ID of the model to use, e.g. `text-embedding-ada-002`."
+        description="ID of the model to use, e.g. `text-embedding-ada-002`.",
+        min_length=1,
     )
 
     dimensions: int | None = Field(
