@@ -279,11 +279,11 @@ async def seed_db(session: AsyncSession) -> None:
             model_tag="Evaluation Model"
         ),
     )
-
+    # NOSONAR
     session.add(
         InferenceCounter(
             ai_model_id=AI_MODEL_LOCALTRAINMODEL_ID,
-            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
+            created_at=datetime.now(tz=UTC) - timedelta(minutes=30),
         )
     )
 
@@ -297,21 +297,21 @@ async def seed_db(session: AsyncSession) -> None:
     session.add(
         InferenceCounter(
             ai_model_id=AI_MODEL_READ_ID,
-            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
+            created_at=datetime.now(tz=UTC) - timedelta(minutes=32),
         )
     )
 
     session.add(
         InferenceCounter(
             ai_model_id=AI_MODEL_DELETE_ID,
-            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
+            created_at=datetime.now(tz=UTC) - timedelta(minutes=33),
         )
     )
 
     session.add(
         InferenceCounter(
             ai_model_id=AI_MODEL_DELETE_ID,
-            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
+            created_at=datetime.now(tz=UTC) - timedelta(minutes=34),
         )
     )
 

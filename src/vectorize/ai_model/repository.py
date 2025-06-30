@@ -61,6 +61,7 @@ async def get_models_paged_db(
         .order_by(func.count(InferenceCounter.id).desc())  # type: ignore[reportArgumentType]
         .offset(offset)
         .limit(size)
+        # TODO add default limiter for time
     )
 
     results = await db.exec(statement)
