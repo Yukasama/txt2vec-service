@@ -9,7 +9,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from vectorize.common.exceptions import VersionMismatchError
 
-from .exceptions import ModelNotFoundError, NoModelFoundError
+from .exceptions import ModelNotFoundError
 from .models import AIModel, AIModelUpdate
 from .utils.model_deletion import remove_model_from_memory
 
@@ -27,7 +27,7 @@ async def get_models_paged_db(
     page: int = 1,
     size: int = 5,
 ) -> tuple[Sequence[AIModel], int]:
-    """Fetches a page of AIModel entries from the database.
+    """Fetches a page of AIModel entries from the database, ordered by inference count.
 
     Args:
         db (AsyncSession): The database session.
@@ -35,26 +35,50 @@ async def get_models_paged_db(
         size (int, optional): Number of items per page. Defaults to 5.
 
     Returns:
-        tuple[list[AIModel], int]: A tuple containing the list of AIModel
-        objects for the requested page,
-        and the total number of models in the database.
+        Tuple[Sequence[AIModel], int]: A tuple containing the list of AIModel
+        objects for the requested page and the total number of models in the database.
 
     Raises:
         NoModelFoundError: If there are no models in the database.
     """
-    total_stmt = select(func.count()).select_from(AIModel)
-    total = await db.scalar(total_stmt)
+    from vectorize.inference.models import (
+        InferenceCounter,  # FIX circular import then move to top level statement
+    )
 
-    if not total:
-        raise NoModelFoundError()
+    page = max(1, page)
+    size = max(1, size)
 
     offset = (page - 1) * size
-    stmt = select(AIModel).offset(offset).limit(size)
-    result = await db.exec(stmt)
-    items = result.all()
 
-    logger.debug("AIModels retrieved", items_fetched=len(items), total_items=total)
-    return items, total
+    statement = (
+        select(AIModel, func.count(InferenceCounter.id).label("inference_count"))  # type: ignore[reportArgumentType]
+        .join(
+            InferenceCounter,
+            onclause=AIModel.id == InferenceCounter.ai_model_id,  # type: ignore[reportArgumentType]
+            isouter=True
+        )
+        .group_by(AIModel.id)  # type: ignore[reportArgumentType]
+        .order_by(func.count(InferenceCounter.id).desc())  # type: ignore[reportArgumentType]
+        .offset(offset)
+        .limit(size)
+    )
+
+    results = await db.exec(statement)
+    models_with_counts = results.all()
+
+    models = [ai_model for ai_model, _ in models_with_counts]
+    for ai_model, inference_count in models_with_counts:
+        logger.info(f"Model: {ai_model.name}, Inference Count: {inference_count}")
+        # TODO reduce log to debug when done
+
+    total_stmt = select(func.count()).select_from(AIModel)
+    total_count_result = await db.exec(total_stmt)
+    total_count = total_count_result.one()
+
+    if total_count == 0:
+        raise ModelNotFoundError()
+
+    return models, total_count
 
 
 async def get_ai_model_db(db: AsyncSession, model_tag: str) -> AIModel:

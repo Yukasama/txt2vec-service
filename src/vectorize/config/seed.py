@@ -15,6 +15,7 @@ from vectorize.dataset.dataset_source import DatasetSource
 from vectorize.dataset.models import Dataset
 from vectorize.dataset.task_model import UploadDatasetTask
 from vectorize.evaluation.models import EvaluationTask
+from vectorize.inference.models import InferenceCounter
 from vectorize.task.task_status import TaskStatus
 from vectorize.training.models import TrainingTask
 from vectorize.upload.models import UploadTask
@@ -278,5 +279,125 @@ async def seed_db(session: AsyncSession) -> None:
             model_tag="Evaluation Model"
         ),
     )
+
+    session.add(
+        InferenceCounter(
+            ai_model_id=AI_MODEL_LOCALTRAINMODEL_ID,
+            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
+        )
+    )
+
+    session.add(
+        InferenceCounter(
+            ai_model_id=AI_MODEL_READ_ID,
+            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
+        )
+    )
+
+    session.add(
+        InferenceCounter(
+            ai_model_id=AI_MODEL_READ_ID,
+            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
+        )
+    )
+
+    session.add(
+        InferenceCounter(
+            ai_model_id=AI_MODEL_DELETE_ID,
+            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
+        )
+    )
+
+    session.add(
+        InferenceCounter(
+            ai_model_id=AI_MODEL_DELETE_ID,
+            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
+        )
+    )
+
+    session.add(
+        InferenceCounter(
+            ai_model_id=AI_MODEL_DELETE_ID,
+            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
+        )
+    )
+
+    session.add(
+        InferenceCounter(
+            ai_model_id=AI_MODEL_FAIL_ID,
+            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
+        )
+    )
+
+    session.add(
+        InferenceCounter(
+            ai_model_id=AI_MODEL_FAIL_ID,
+            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
+        )
+    )
+
+    session.add(
+        InferenceCounter(
+            ai_model_id=AI_MODEL_FAIL_ID,
+            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
+        )
+    )
+
+    session.add(
+        InferenceCounter(
+            ai_model_id=AI_MODEL_FAIL_ID,
+            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
+        )
+    )
+
+    session.add(
+        InferenceCounter(
+            ai_model_id=AI_MODEL_LOCALTRAINMODEL_ID,
+            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
+        )
+    )
+
+    session.add(
+        InferenceCounter(
+            ai_model_id=AI_MODEL_LOCALTRAINMODEL_ID,
+            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
+        )
+    )
+
+    session.add(
+        InferenceCounter(
+            ai_model_id=AI_MODEL_LOCALTRAINMODEL_ID,
+            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
+        )
+    )
+
+    session.add(
+        InferenceCounter(
+            ai_model_id=AI_MODEL_LOCALTRAINMODEL_ID,
+            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
+        )
+    )
+
+    session.add(
+        InferenceCounter(
+            ai_model_id=AI_MODEL_LOCALTRAINMODEL_ID,
+            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
+        )
+    )
+
+    session.add(
+        InferenceCounter(
+            ai_model_id=AI_MODEL_DELETE_ID,
+            created_at=datetime.now(tz=UTC) - timedelta(days=30),
+        )
+    )
+
+    session.add(
+        InferenceCounter(
+            ai_model_id=AI_MODEL_LOCALTRAINMODEL_ID,
+            created_at=datetime.now(tz=UTC) - timedelta(days=30),
+        )
+    )
+
     await session.commit()
     logger.info("Database seeded with initial data")

@@ -1,5 +1,5 @@
 """Service for importing GitHub models."""
-
+import shutil
 import tempfile
 from pathlib import Path
 
@@ -55,7 +55,7 @@ async def load_github_model_and_cache_only_svc(  # noqa: RUF029 NOSONAR
             "repo": repo,
             "branch": branch,
             "local_path": _github_models[normalized_key],
-            "key": normalized_key,
+            "key": normalized_key
         }
 
     try:
@@ -92,7 +92,8 @@ async def load_github_model_and_cache_only_svc(  # noqa: RUF029 NOSONAR
                 logger.debug("Creating cache dir {}", cache_dir)
                 for filename, pfad in paths.items():
                     dest = cache_dir / filename
-                    pfad.replace(dest)
+                    shutil.copy2(pfad, dest)
+                    pfad.unlink()
                     paths[filename] = dest
 
             lokal_pfad = str((cache_dir / "pytorch_model.bin").resolve())
