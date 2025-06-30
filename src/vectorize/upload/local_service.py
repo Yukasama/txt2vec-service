@@ -45,6 +45,33 @@ async def _process_directory(
     )
 
 
+MODEL_ALREADY_EXISTS_MSG = "Model '{}' already exists"
+
+
+def _handle_model_already_exists(dir_path: str, existing_models: list[str]) -> None:
+    """Handle ModelAlreadyExistsError for a directory."""
+    model_folder_name = dir_path.split("/", 1)[-1] if "/" in dir_path else dir_path
+    existing_models.append(model_folder_name)
+    logger.warning(MODEL_ALREADY_EXISTS_MSG, model_folder_name)
+
+
+def _handle_invalid_model_directory(
+    dir_path: str, base_dir: Path, e: NoValidModelsFoundError
+) -> None:
+    """Handle NoValidModelsFoundError for a directory."""
+    model_folder_name = dir_path.split("/", 1)[-1] if "/" in dir_path else dir_path
+    logger.warning("Skipping invalid model directory '{}': {}", dir_path, e)
+
+    sanitized_name = Path(model_folder_name).name
+    if not sanitized_name or sanitized_name in {".", ".."}:
+        logger.warning("Invalid model folder name: '{}'", model_folder_name)
+        return
+
+    model_path = base_dir / sanitized_name
+    if model_path.exists():
+        shutil.rmtree(model_path, ignore_errors=True)
+
+
 async def _process_directories(
     zip_ref: zipfile.ZipFile,
     model_dirs: dict[str, list],
@@ -70,21 +97,13 @@ async def _process_directories(
             model_dir, model_id = await _process_directory(
                 zip_ref, dir_path, dir_files, base_dir, db
             )
-
             processed_models.append((model_dir, model_id))
 
         except ModelAlreadyExistsError:
-            model_folder_name = dir_path.split("/")[-1] if "/" in dir_path else dir_path
-            existing_models.append(model_folder_name)
-            logger.warning("Model '{}' already exists", model_folder_name)
+            _handle_model_already_exists(dir_path, existing_models)
 
         except NoValidModelsFoundError as e:
-            model_folder_name = dir_path.split("/")[-1] if "/" in dir_path else dir_path
-            logger.warning("Skipping invalid model directory '{}': {}", dir_path, e)
-            model_path = base_dir / model_folder_name
-
-            if model_path.exists():
-                shutil.rmtree(model_path, ignore_errors=True)
+            _handle_invalid_model_directory(dir_path, base_dir, e)
 
     return processed_models, existing_models
 
@@ -110,7 +129,7 @@ async def _process_multi_model(
             processed_models.append(result)
         except ModelAlreadyExistsError:
             existing_models.append(base_name)
-            logger.warning("Model '{}' already exists", base_name)
+            logger.warning(MODEL_ALREADY_EXISTS_MSG, base_name)
 
         return processed_models, existing_models
 
@@ -149,7 +168,7 @@ def _handle_results(
     if not processed_models:
         if existing_models:
             msg = (
-                f"Model '{base_name}' already exists"
+                MODEL_ALREADY_EXISTS_MSG.format(base_name)
                 if not multi_model
                 else f"All models already exist: {', '.join(existing_models)}"
             )
@@ -235,7 +254,7 @@ async def upload_zip_model(
                 except ModelAlreadyExistsError as err:
                     existing_models.append(base_name)
                     raise ModelAlreadyExistsError(
-                        f"Model '{base_name}' already exists"
+                        MODEL_ALREADY_EXISTS_MSG.format(base_name)
                     ) from err
 
         return _handle_results(

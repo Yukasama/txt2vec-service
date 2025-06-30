@@ -28,6 +28,33 @@ __all__ = ["process_model_directory", "process_single_model", "save_zip_to_temp"
 ALLOWED_EXTENSIONS = {".pt", ".pth", ".bin", ".model", ".safetensors", ".json"}
 
 
+def _sanitize_path(file_path: str) -> str | None:
+    """Sanitize file path to prevent path traversal attacks.
+
+    Args:
+        file_path: Raw file path from ZIP archive
+
+    Returns:
+        Sanitized filename or None if invalid
+    """
+    if not file_path or file_path.endswith("/"):
+        return None
+
+    # Get just the filename to prevent path traversal
+    sanitized_name = Path(file_path).name
+
+    # Reject dangerous names
+    if (
+        not sanitized_name
+        or sanitized_name in {".", ".."}
+        or sanitized_name.startswith(".")
+    ):
+        logger.warning("Rejected unsafe filename: '{}'", file_path)
+        return None
+
+    return sanitized_name
+
+
 async def save_zip_to_temp(file: UploadFile) -> Path:
     """Save ZIP file to a temporary location.
 
@@ -79,12 +106,18 @@ async def _extract_file_from_zip(
             logger.debug("Skipping file with non-allowed extension: {}", file_path)
             return False
 
+        # Sanitize the file path to prevent path traversal attacks
         if common_prefix and file_path.startswith(common_prefix + "/"):
-            relative_path = file_path[len(common_prefix) + 1 :]
+            relative_file_path = file_path[len(common_prefix) + 1 :]
         else:
-            relative_path = Path(file_path).name
+            relative_file_path = file_path
 
-        final_target_path = target_path / relative_path
+        sanitized_name = _sanitize_path(relative_file_path)
+        if not sanitized_name:
+            logger.warning("Skipping file with unsafe path: '{}'", file_path)
+            return False
+
+        final_target_path = target_path / sanitized_name
         final_target_path.parent.mkdir(parents=True, exist_ok=True)
 
         with zip_ref.open(file_path) as source:
@@ -157,11 +190,15 @@ async def process_model_directory(
 
     for file_path in file_paths:
         if await _extract_file_from_zip(zip_ref, file_path, model_dir, common_prefix):
+            # Use the same sanitization logic as in _extract_file_from_zip
             if common_prefix and file_path.startswith(common_prefix + "/"):
-                relative_path = file_path[len(common_prefix) + 1 :]
+                relative_file_path = file_path[len(common_prefix) + 1 :]
             else:
-                relative_path = Path(file_path).name
-            extracted_files.append(model_dir / relative_path)
+                relative_file_path = file_path
+
+            sanitized_name = _sanitize_path(relative_file_path)
+            if sanitized_name:
+                extracted_files.append(model_dir / sanitized_name)
 
     if not extracted_files:
         raise NoValidModelsFoundError(
@@ -231,8 +268,13 @@ async def process_single_model(
             )
             continue
 
-        target_name = Path(file_info.filename).name
-        target_path = model_dir / target_name
+        # Sanitize filename to prevent path traversal attacks
+        sanitized_name = _sanitize_path(file_info.filename)
+        if not sanitized_name:
+            logger.warning("Skipping file with unsafe path: '{}'", file_info.filename)
+            continue
+
+        target_path = model_dir / sanitized_name
 
         with zip_ref.open(file_info) as source:
             async with aiofiles.open(target_path, "wb") as target:
