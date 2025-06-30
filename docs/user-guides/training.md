@@ -2,6 +2,17 @@
 
 Dieses Modul enthält die gesamte Logik für das Training von SBERT-Modellen (Sentence-BERT) inklusive Datenvalidierung, Trainingsorchestrierung, Fehlerbehandlung und Utilities für die Integration in REST-APIs.
 
+## Trainingsprinzip
+
+Das Training erfolgt mit **Triplet-Losses** basierend auf Triplets bestehend aus:
+- **Anchor (Question)**: Ausgangsfrage oder Satz
+- **Positive**: Semantisch ähnliche Antwort
+- **Negative**: Semantisch unähnliche Antwort
+
+**Ziel:** Die Embeddings von Anchor und Positive sollen möglichst ähnlich (hohe Kosinus-Ähnlichkeit) sein, während die Embeddings von Anchor und Negative möglichst unähnlich (niedrige Kosinus-Ähnlichkeit) werden.
+
+Weitere Details siehe [SBERT-Dokumentation](https://www.sbert.net/docs/package_reference/losses.html).
+
 
 ## Übersicht
 
@@ -331,30 +342,6 @@ POST /evaluation/evaluate
 
 Diese Integration ermöglicht konsistente Evaluierung mit denselben Validierungsdaten, die beim Training verwendet wurden.
 
-
-## Leseliteratur
-
-### Was sind Sentence-Transformers?
-
-Sentence-Transformers sind spezialisierte Modelle, die auf BERT, RoBERTa oder ähnlichen Architekturen basieren und darauf trainiert sind, ganze Sätze oder Textabschnitte als dichte Vektoren (Embeddings) im semantischen Raum abzubilden. Dadurch können semantisch ähnliche Sätze durch ähnliche Vektoren repräsentiert werden.
-
-**Typische Anwendungsfälle:**
-
-- **Semantische Suche (Semantic Search)**: Finden von relevanten Dokumenten basierend auf der Bedeutung, nicht nur auf exakten Stichwörtern
-- **Clustering und Klassifikation von Texten**: Gruppierung ähnlicher Inhalte oder automatische Kategorisierung
-- **Ähnlichkeitsmessung**: Erkennung von Duplikaten oder verwandten Inhalten (z.B. Duplicate Detection)
-
-## Trainingsprinzip
-
-Das Training erfolgt mit **Triplet-Losses** basierend auf Triplets bestehend aus:
-- **Anchor (Question)**: Ausgangsfrage oder Satz
-- **Positive**: Semantisch ähnliche Antwort
-- **Negative**: Semantisch unähnliche Antwort
-
-**Ziel:** Die Embeddings von Anchor und Positive sollen möglichst ähnlich (hohe Kosinus-Ähnlichkeit) sein, während die Embeddings von Anchor und Negative möglichst unähnlich (niedrige Kosinus-Ähnlichkeit) werden.
-
-Weitere Details siehe [SBERT-Dokumentation](https://www.sbert.net/docs/package_reference/losses.html).
-
 ## Testen
 
 Tests für das Trainingsmodul befinden sich in `tests/training/`:
@@ -365,18 +352,6 @@ pytest tests/training/ -v
 
 - **Valid-Tests**: Erfolgreiches Training mit korrekten Daten
 - **Invalid-Tests**: Fehlerfälle und fehlerhafte Daten
-
-## Abhängigkeiten
-
-- **sentence-transformers**: Kernbibliothek für SBERT-Training
-- **torch**: PyTorch Backend für das Training
-- **pandas**: Datenhandling und -validierung
-- **numpy**: Numerische Operationen
-- **loguru**: Strukturiertes Logging
-- **sqlmodel**: Datenbankoperationen
-- **fastapi**: REST-API Framework
-- **pydantic**: Datenvalidierung und Serialisierung
-- **dramatiq**: Background Task-Processing für asynchrone Training-Jobs
 
 ## Datenformat
 
@@ -398,6 +373,12 @@ Das System erwartet JSONL-Dateien mit folgender Struktur:
 - Alle Spalten müssen vorhanden sein
 - Keine NULL-Werte oder leere Strings
 - Mindestens ein Trainingseintrag erforderlich
+
+## Leseliteratur
+
+### Was sind Sentence-Transformers?
+
+Sentence-Transformers sind spezialisierte Modelle, die auf BERT, RoBERTa oder ähnlichen Architekturen basieren und darauf trainiert sind, ganze Sätze oder Textabschnitte als dichte Vektoren (Embeddings) im semantischen Raum abzubilden. Dadurch können semantisch ähnliche Sätze durch ähnliche Vektoren repräsentiert werden.
 
 ---
 
