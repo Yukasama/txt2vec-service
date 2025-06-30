@@ -4,7 +4,7 @@ from fastapi import Request
 
 from vectorize.common.exceptions import VersionMissingError
 
-_all_ = ["parse_etag"]
+__all__ = ["parse_etag"]
 
 
 def parse_etag(resource_id: str, request: Request) -> int:

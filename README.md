@@ -86,12 +86,12 @@ vectorize/
 
 | Feature | Guide                                         | Description                                      |
 | ------- | --------------------------------------------- | ------------------------------------------------ |
-| 📊      | [Dataset Management](user-guides/datasets.md) | Upload, validate, and manage training datasets   |
-| 🤖      | [AI Models](user-guides/models.md)            | Work with embedding models from multiple sources |
-| 🎯      | [Model Training](user-guides/training.md)     | Train custom embedding models                    |
-| 📈      | [Model Evaluation](user-guides/evaluation.md) | Evaluate and benchmark model performance         |
-| 🔄      | [Synthetic Data](user-guides/synthesis.md)    | Generate synthetic datasets                      |
-| 📋      | [Background Tasks](user-guides/tasks.md)      | Monitor and manage async operations              |
+| 📊      | [Dataset Management](guides/datasets.md) | Upload, validate, and manage training datasets   |
+| 🤖      | [AI Models](guides/models.md)            | Work with embedding models from multiple sources |
+| 🎯      | [Model Training](guides/training.md)     | Train custom embedding models                    |
+| 📈      | [Model Evaluation](guides/evaluation.md) | Evaluate and benchmark model performance         |
+| 🔄      | [Synthetic Data](guides/synthesis.md)    | Generate synthetic datasets                      |
+| 📋      | [Background Tasks](guides/tasks.md)      | Monitor and manage async operations              |
 
 ### 🔧 Developer Resources
 
