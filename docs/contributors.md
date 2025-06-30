@@ -58,4 +58,4 @@ Contributors who make significant contributions are:
 
 ---
 
-**Thank you for making Vectorize better!** 🚀
+**Thank you for making Vectorize better!**

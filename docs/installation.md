@@ -1,8 +1,10 @@
-# 📦 Installation Guide
+
+# Installation Guide
 
 This guide will help you set up Vectorize for development or production use. Choose the method that best fits your needs.
 
-## 🚀 Quick Start
+
+## Quick Start
 
 ### Prerequisites
 
@@ -128,7 +130,8 @@ docker compose logs -f vectorize
 - **API Docs**: http://localhost:8000/docs
 - **Health Check**: http://localhost:8000/health
 
-## 🔧 Environment Configuration
+
+## Environment Configuration
 
 ### Essential Environment Variables
 
@@ -159,7 +162,8 @@ LOG_DIR=/custom/path/logs
 
 For complete configuration options, see the [Configuration Guide](configuration.md).
 
-## 🚀 Running Vectorize
+
+## Running Vectorize
 
 ### Development Mode
 
@@ -202,7 +206,8 @@ docker compose up -d dramatiq_worker  # Background worker
 docker compose up -d caddy        # Reverse proxy
 ```
 
-## 🧪 Verification and Testing
+
+## Verification and Testing
 
 ### Health Checks
 
@@ -254,7 +259,8 @@ curl http://localhost:8000/datasets
 curl http://localhost:8000/tasks
 ```
 
-## 🔧 Development Tools Setup
+
+## Development Tools Setup
 
 ### IDE Configuration
 
@@ -285,7 +291,8 @@ uv run pre-commit install
 uv run pre-commit run --all-files
 ```
 
-## 🐛 Troubleshooting
+
+## Troubleshooting
 
 ### Common Issues
 
@@ -341,11 +348,12 @@ docker system prune -a
 # Or use smaller models for development
 ```
 
+
 ### Getting Help
 
-- **📚 Documentation**: Check other docs in this directory
-- **🐛 Issues**: [Report bugs on GitHub](https://github.com/yukasama/vectorize/issues)
-- **💬 Discussions**: [Ask questions on GitHub](https://github.com/yukasama/vectorize/discussions)
+- **Documentation**: Check other docs in this directory
+- **Issues**: [Report bugs on GitHub](https://github.com/yukasama/vectorize/issues)
+- **Discussions**: [Ask questions on GitHub](https://github.com/yukasama/vectorize/discussions)
 
 ### Performance Optimization
 
@@ -358,14 +366,15 @@ uv run snakeviz startup.prof
 docker stats vectorize
 ```
 
-## ✅ Next Steps
+
+## Next Steps
 
 After successful installation:
 
-1. **📖 [Read the Configuration Guide](configuration.md)** - Learn about all available settings
-2. **🔌 [Explore the API](api.md)** - Understand available endpoints
-3. **🤝 [Contributing Guide](contributing.md)** - Start contributing to the project
+1. **[Read the Configuration Guide](configuration.md)** - Learn about all available settings
+2. **[Explore the API](api.md)** - Understand available endpoints
+3. **[Contributing Guide](contributing.md)** - Start contributing to the project
 
 ---
 
-**Installation complete!** 🎉 You're now ready to start using Vectorize for your text embedding workflows.
+**Installation complete!** You're now ready to start using Vectorize for your text embedding workflows.

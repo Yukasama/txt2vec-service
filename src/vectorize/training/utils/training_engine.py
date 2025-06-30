@@ -3,6 +3,7 @@
 import ast
 import builtins
 import time
+import uuid
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -43,6 +44,11 @@ class SBERTTrainingEngine:
         """
         if self.model is None:
             raise RuntimeError("Model not loaded")
+
+        orig_output_dir = output_dir
+        if "finetuned" in train_request.model_tag:
+            new_uuid = uuid.uuid4().hex[:8]
+            output_dir = f"{orig_output_dir}-trained-{new_uuid}"
 
         loss = losses.CosineSimilarityLoss(self.model)
         start_time = time.time()
