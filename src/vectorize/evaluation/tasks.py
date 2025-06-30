@@ -144,7 +144,6 @@ async def run_evaluation_bg(
             )
 
         except (EvaluationModelNotFoundError, TrainingDatasetNotFoundError) as e:
-            # Handle known user errors gracefully, no stacktrace
             logger.error(
                 f"Evaluation failed: {e}",
                 task_id=task_id,
