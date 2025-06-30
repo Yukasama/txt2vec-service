@@ -89,7 +89,7 @@ https://localhost {
                 Access-Control-Allow-Origin      "*"
                 Access-Control-Allow-Credentials "true"
                 Access-Control-Allow-Methods     "GET, POST, PUT, DELETE, OPTIONS"
-                Access-Control-Allow-Headers     "Content-Type, Authorization, X-Requested-With"
+                Access-Control-Allow-Headers     "Content-Type, Authorization, X-Requested-With, If-Match, If-None-Match"
                 Access-Control-Max-Age           "86400"
                 Vary                             "Origin"
             }
@@ -102,11 +102,13 @@ https://localhost {
                 Access-Control-Allow-Origin      "*"
                 Access-Control-Allow-Credentials "true"
                 Vary                             "Origin"
-                Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; frame-ancestors 'none'"
+                Content-Security-Policy          "default-src 'self'; base-uri 'self'; object-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; frame-ancestors 'none'"
             }
-            
+                        
             reverse_proxy vectorize:8000 {
-                header_up X-Real-IP         {remote_host}
+                header_up X-Real-IP {remote_host}
+                header_up If-Match {header.If-Match}
+                header_up If-None-Match {header.If-None-Match}
             }
         }
     }
