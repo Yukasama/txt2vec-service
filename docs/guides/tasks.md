@@ -1,4 +1,4 @@
-# Background Tasks Guide
+# Tasks Guide
 
 The Tasks module provides centralized monitoring and management for all background operations in Vectorize. This unified interface allows you to track the status of uploads, training, evaluation, synthesis, and other asynchronous processes.
 
