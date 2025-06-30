@@ -1,8 +1,10 @@
-## 📊 Monitoring with Grafana
+
+## Monitoring with Grafana
 
 Vectorize comes with **powerful built-in observability** through Grafana, Prometheus, and Loki, giving you full visibility into your system's behavior, performance, and health.
 
-### 🚪 Accessing Grafana
+
+### Accessing Grafana
 
 - **URL:** [https://localhost/monitoring](https://localhost/monitoring)
 - **Login Credentials:**
@@ -12,7 +14,8 @@ Vectorize comes with **powerful built-in observability** through Grafana, Promet
 
 ---
 
-### 🎨 What You’ll See
+
+### What You’ll See
 
 - **Custom Dashboard:**  
   Find a pre-configured dashboard under **Dashboards**, designed specifically for Vectorize. It shows:
@@ -29,7 +32,8 @@ Vectorize comes with **powerful built-in observability** through Grafana, Promet
 
 ---
 
-### ⚙️ How It Works
+
+### How It Works
 
 - **Prometheus Metrics:**  
   Vectorize exposes detailed metrics via a custom middleware in `src/vectorize/utils/prometheus.py`.  
@@ -44,7 +48,8 @@ Vectorize comes with **powerful built-in observability** through Grafana, Promet
 
 ---
 
-### ✏️ Customization Options
+
+### Customization Options
 
 - **Update Admin Credentials:**  
   Set your own Grafana admin username and password by editing environment variables in `resources/grafana/compose.yaml`.
@@ -59,7 +64,8 @@ Vectorize comes with **powerful built-in observability** through Grafana, Promet
 
 ---
 
-### 💡 Useful Tips
+
+### Useful Tips
 
 - **Live Monitoring:**  
   Keep the Grafana dashboard open for real-time tracking of API performance, background task activity, and error rates.

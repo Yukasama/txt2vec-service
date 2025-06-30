@@ -1,8 +1,10 @@
-# 🤝 Contributing to Vectorize
+
+# Contributing to Vectorize
 
 Thank you for your interest in contributing to Vectorize! This guide will help you get started with contributing to our text embedding service platform.
 
-## 🚀 Getting Started
+
+## Getting Started
 
 Check out our [Installation Guide](installation.md) for setup instructions. Use **Method 1: Development Setup** which includes all dev tools and dependencies.
 
@@ -23,7 +25,8 @@ uv run pytest
 uv run app
 ```
 
-## 🛠️ Development Workflow
+
+## Development Workflow
 
 ### Code Quality Tools
 
@@ -68,7 +71,8 @@ module/
 - Test schema changes thoroughly
 - Consider backward compatibility
 
-## 📝 Submitting Changes
+
+## Submitting Changes
 
 ### Pull Request Process
 
@@ -112,10 +116,10 @@ git commit -m "feat: add new feature description"
 
 **Automated Checks:**
 
-- ✅ All tests pass
-- ✅ Code coverage maintained
-- ✅ Linting passes
-- ✅ Type checking passes
+- All tests pass
+- Code coverage maintained
+- Linting passes
+- Type checking passes
 
 **Manual Review:**
 
@@ -123,7 +127,8 @@ git commit -m "feat: add new feature description"
 - Test completeness
 - Documentation updates
 
-## 🧪 Development Tools
+
+## Development Tools
 
 ### Running Services
 
@@ -158,7 +163,8 @@ uvx locust -f scripts/locust.py --host=http://localhost:8000 --headless --users 
 sqlite3 app.db
 ```
 
-## 🐛 Issue Reporting
+
+## Issue Reporting
 
 ### Bug Reports Include:
 
@@ -173,13 +179,15 @@ sqlite3 app.db
 - **Solution**: Detailed feature description
 - **Alternatives**: Other approaches considered
 
-## 🆘 Getting Help
 
-- **🔍 Issues**: Search [GitHub issues](https://github.com/yukasama/vectorize/issues)
-- **💬 Discussions**: Use [GitHub Discussions](https://github.com/yukasama/vectorize/discussions)
-- **🐛 Bugs**: Create [new issue](https://github.com/yukasama/vectorize/issues/new)
+## Getting Help
 
-## 📋 Code of Conduct
+- **Issues**: Search [GitHub issues](https://github.com/yukasama/vectorize/issues)
+- **Discussions**: Use [GitHub Discussions](https://github.com/yukasama/vectorize/discussions)
+- **Bugs**: Create [new issue](https://github.com/yukasama/vectorize/issues/new)
+
+
+## Code of Conduct
 
 - Be respectful and constructive
 - Help newcomers learn
@@ -188,4 +196,4 @@ sqlite3 app.db
 
 ---
 
-**Thank you for contributing to Vectorize!** 🚀
+**Thank you for contributing to Vectorize!**
