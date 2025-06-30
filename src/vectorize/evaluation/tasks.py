@@ -9,7 +9,9 @@ from loguru import logger
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from vectorize.config.db import engine
+from vectorize.evaluation.exceptions import EvaluationModelNotFoundError
 from vectorize.task.task_status import TaskStatus
+from vectorize.training.exceptions import TrainingDatasetNotFoundError
 
 from .schemas import EvaluationRequest
 from .utils import (
@@ -141,6 +143,23 @@ async def run_evaluation_bg(
                 model_tag=evaluation_request.model_tag,
             )
 
+        except (EvaluationModelNotFoundError, TrainingDatasetNotFoundError) as e:
+            logger.error(
+                f"Evaluation failed: {e}",
+                task_id=task_id,
+                model_tag=evaluation_request_dict.get("model_tag", "unknown"),
+                error=str(e),
+                exc_info=False,
+            )
+            try:
+                if db_manager is not None:
+                    await db_manager.handle_evaluation_error(e)
+                else:
+                    db_manager = EvaluationDatabaseManager(db, UUID(task_id))
+                    await db_manager.handle_evaluation_error(e)
+            except Exception:
+                logger.error("Failed to update task status to FAILED", task_id=task_id)
+            return
         except Exception as e:
             logger.error(
                 "Error in evaluation background task",
@@ -149,7 +168,6 @@ async def run_evaluation_bg(
                 error=str(e),
                 exc_info=True,
             )
-
             try:
                 if db_manager is not None:
                     await db_manager.handle_evaluation_error(e)

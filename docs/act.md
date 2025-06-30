@@ -1,17 +1,20 @@
-# 🎭 Local CI with Act
+
+# Local CI with Act
 
 Learn how to run GitHub Actions workflows locally using Act, enabling you to test CI/CD changes before pushing to GitHub.
 
-## 🚀 What is Act?
+
+## What is Act?
 
 [Act](https://github.com/nektos/act) runs your GitHub Actions locally using Docker. This allows you to:
 
-- **🧪 Test workflows before pushing** - Catch issues early
-- **⚡ Faster iteration** - No need to push and wait for GitHub runners
-- **🔧 Debug workflow issues** - Interactive debugging capabilities
-- **💰 Save GitHub Action minutes** - Especially important for private repos
+- **Test workflows before pushing** - Catch issues early
+- **Faster iteration** - No need to push and wait for GitHub runners
+- **Debug workflow issues** - Interactive debugging capabilities
+- **Save GitHub Action minutes** - Especially important for private repos
 
-## 📦 Installation
+
+## Installation
 
 ### macOS
 
@@ -50,7 +53,8 @@ choco install act-cli
 winget install nektos.act
 ```
 
-## 🔧 Basic Usage
+
+## Basic Usage
 
 ### Run All Workflows
 
@@ -78,7 +82,8 @@ act -j lint
 act -j test -j lint
 ```
 
-## 🎯 Vectorize-Specific Commands
+
+## Vectorize-Specific Commands
 
 ### Main CI Workflow
 
@@ -121,7 +126,8 @@ act --interactive
 act --dry-run
 ```
 
-## 📊 Performance Tips
+
+## Performance Tips
 
 ### Speed Optimization
 
@@ -146,14 +152,16 @@ act --container-cap-add SYS_PTRACE --container-cap-drop ALL
 docker system prune -f
 ```
 
-## 🔗 Useful Resources
 
-- **📚 [Act Documentation](https://github.com/nektos/act)** - Official documentation
-- **🐳 [Available Images](https://github.com/catthehacker/docker_images)** - Act-optimized Docker images
-- **🎯 [GitHub Actions Docs](https://docs.github.com/en/actions)** - Understanding GitHub Actions
+## Useful Resources
+
+- **[Act Documentation](https://github.com/nektos/act)** - Official documentation
+- **[Available Images](https://github.com/catthehacker/docker_images)** - Act-optimized Docker images
+- **[GitHub Actions Docs](https://docs.github.com/en/actions)** - Understanding GitHub Actions
 
 ---
 
-**Happy local testing!** 🎭
+
+**Happy local testing!**
 
 Act helps you catch issues early and iterate faster on your CI/CD workflows. Remember that while Act is very accurate, the final test is always running on GitHub's actual runners.

@@ -1,19 +1,21 @@
-# 📊 Dataset Guide
+
+# Dataset Guide
 
 The Dataset module makes uploading, processing, and managing training data simple. It supports multiple formats, validates schemas, and integrates directly with HuggingFace datasets.
 
-## 🚀 What Can It Do?
+## What Can It Do?
 
-- **📁 Multi-Format Upload**: CSV, JSON, JSONL, XML, Excel, ZIP
-- **🤖 HuggingFace Integration**: Download & process datasets automatically
-- **🔄 Format Conversion**: Standardizes uploads to JSONL
-- **✅ Schema Validation**: Ensures correct columns
-- **📦 Batch Uploads**: Handle multiple files/archives
-- **🏷️ CRUD Operations**: Create, read, update, delete datasets
+- **Multi-Format Upload**: CSV, JSON, JSONL, XML, Excel, ZIP
+- **HuggingFace Integration**: Download & process datasets automatically
+- **Format Conversion**: Standardizes uploads to JSONL
+- **Schema Validation**: Ensures correct columns
+- **Batch Uploads**: Handle multiple files/archives
+- **CRUD Operations**: Create, read, update, delete datasets
 
 ---
 
-## 📂 Local File Upload
+
+## Local File Upload
 
 ### Supported Formats
 
@@ -97,7 +99,8 @@ with open("datasets.zip", "rb") as f:
 
 ---
 
-## 🤖 HuggingFace Dataset Integration
+
+## HuggingFace Dataset Integration
 
 Download and process datasets directly from HuggingFace. Columns are mapped automatically, datasets split into train/test, and results stored in your system.
 
@@ -153,10 +156,10 @@ async def wait_for_upload(task_id: str):
         status = response.json()["task_status"]
 
         if status == "D":
-            print("✅ Upload completed!")
+            print("Upload completed!")
             break
         elif status == "F":
-            print(f"❌ Upload failed: {response.json().get('error_msg', 'Unknown error')}")
+            print(f"Upload failed: {response.json().get('error_msg', 'Unknown error')}")
             break
 
         print("🔄 Upload in progress...")
@@ -165,7 +168,8 @@ async def wait_for_upload(task_id: str):
 
 ---
 
-## 📋 Dataset Management Operations
+
+## Dataset Management Operations
 
 ### List Datasets
 
@@ -214,12 +218,13 @@ curl -X DELETE "http://localhost:8000/datasets/{dataset_id}"
 
 ```python
 response = await client.delete(f"http://localhost:8000/datasets/{dataset_id}")
-print("✅ Dataset deleted")
+print("Dataset deleted")
 ```
 
 ---
 
-## 🔧 Common Errors
+
+## Common Errors
 
 | Error                    | Cause                     | Solution                                 |
 | ------------------------ | ------------------------- | ---------------------------------------- |

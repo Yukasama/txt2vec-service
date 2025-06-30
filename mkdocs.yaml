@@ -80,14 +80,14 @@ nav:
       - Monitoring with Grafana: grafana.md
       - Run local CI with Act: act.md
   - User Guides:
-      - Datasets: user-guides/datasets.md
-      - AI Models: user-guides/models.md
-      - Inference: user-guides/inference.md
-      - Upload: user-guides/upload.md
-      - Synthesis: user-guides/synthesis.md
-      - Training: user-guides/training.md
-      - Evaluation: user-guides/evaluation.md
-      - Tasks: user-guides/tasks.md
+      - Datasets: guides/datasets.md
+      - AI Models: guides/models.md
+      - Inference: guides/inference.md
+      - Upload: guides/upload.md
+      - Synthesis: guides/synthesis.md
+      - Training: guides/training.md
+      - Evaluation: guides/evaluation.md
+      - Tasks: guides/tasks.md
   - API Reference:
       - Overview: api.md
       - Endpoints:

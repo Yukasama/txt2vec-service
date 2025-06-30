@@ -7,6 +7,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from vectorize.ai_model.exceptions import ModelNotFoundError
 from vectorize.ai_model.repository import get_ai_model_db
+from vectorize.evaluation.exceptions import EvaluationModelNotFoundError
 from vectorize.task.task_status import TaskStatus
 
 from ..repository import (
@@ -175,10 +176,12 @@ class EvaluationDatabaseManager:
             Path to the baseline model
 
         Raises:
-            ModelNotFoundError: If baseline model not found
+            EvaluationModelNotFoundError: If baseline model not found
         """
-        baseline_model = await get_ai_model_db(self.db, baseline_model_tag)
+        try:
+            baseline_model = await get_ai_model_db(self.db, baseline_model_tag)
+        except Exception as exc:
+            raise EvaluationModelNotFoundError(baseline_model_tag) from exc
         if not baseline_model:
-            raise ModelNotFoundError(baseline_model_tag)
-
+            raise EvaluationModelNotFoundError(baseline_model_tag)
         return resolve_model_path(baseline_model.model_tag)

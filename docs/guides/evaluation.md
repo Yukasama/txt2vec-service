@@ -254,23 +254,6 @@ curl -X GET "http://localhost:8000/evaluation/{task_id}/status"
 - `baseline_model_tag`: For comparison evaluation
 - `max_samples`: Default is 1000, must be > 0
 
-**Invalid Combinations:**
-
-```json
-// FAILS: Both training_task_id AND dataset_id
-{
-  "model_tag": "...",
-  "training_task_id": "...",
-  "dataset_id": "..."
-}
-
-// FAILS: Neither training_task_id nor dataset_id
-{
-  "model_tag": "...",
-  "baseline_model_tag": "..."
-}
-```
-
 ### Baseline Comparison Metrics
 
 When using `baseline_model_tag`, you get additional improvement metrics:
@@ -412,40 +395,6 @@ pytest tests/evaluation/ -m integration -v
 4. **Monitor Progress:** `GET /evaluation/{task_id}/status`
 
 5. **Analyze Results:** Review metrics and baseline comparison
-
-## Dependencies
-
-### Core Dependencies
-
-- **sentence-transformers**: Model loading and inference
-- **scikit-learn**: Cosine similarity computation
-- **scipy**: Spearman correlation calculations
-- **pandas**: Dataset manipulation and loading
-- **numpy**: Numerical operations and vectorization
-- **loguru**: Structured logging with context
-
-### API Dependencies
-
-- **FastAPI**: REST API framework
-- **Pydantic**: Request/response validation
-- **SQLModel**: Database ORM and async operations
-- **uvicorn**: ASGI server for async processing
-
-### Development Dependencies
-
-- **pytest**: Testing framework
-- **pytest-asyncio**: Async test support
-- **httpx**: API testing client
-
-### Installation
-
-```bash
-# Install with evaluation dependencies
-pip install -e ".[evaluation]"
-
-# Or install all dependencies
-pip install -e ".[all]"
-```
 
 ## Related Documentation
 

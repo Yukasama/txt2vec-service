@@ -2,14 +2,15 @@
 
 The Tasks module provides centralized monitoring and management for all background operations in Vectorize. This unified interface allows you to track the status of uploads, training, evaluation, synthesis, and other asynchronous processes.
 
-## 🚀 What the Tasks Endpoint Can Do
+
+## What the Tasks Endpoint Can Do
 
 The `/tasks` endpoint serves as your central command center for monitoring all background operations:
 
-- **📊 Unified Task View**: Monitor all background tasks from different modules in one place
-- **🔍 Advanced Filtering**: Filter tasks by type, status, time windows, and custom tags
-- **📈 Real-time Status**: Get up-to-date information on running, completed, and failed tasks
-- **📋 Pagination Support**: Handle large numbers of tasks efficiently with limit/offset pagination
+- **Unified Task View**: Monitor all background tasks from different modules in one place
+- **Advanced Filtering**: Filter tasks by type, status, time windows, and custom tags
+- **Real-time Status**: Get up-to-date information on running, completed, and failed tasks
+- **Pagination Support**: Handle large numbers of tasks efficiently with limit/offset pagination
 
 ### Supported Task Types
 
@@ -19,7 +20,8 @@ The `/tasks` endpoint serves as your central command center for monitoring all b
 - **`evaluation`**: Model evaluation and benchmarking tasks
 - **`synthesis`**: Synthetic data generation operations
 
-## 🔧 Available Filters
+
+## Available Filters
 
 ### Core Filters
 
@@ -47,7 +49,8 @@ The `/tasks` endpoint serves as your central command center for monitoring all b
 | `F`  | FAILED    | Task failed with an error        |
 | `C`  | CANCELLED | Task was manually cancelled      |
 
-## 📖 Usage Examples
+
+## Usage Examples
 
 ### Basic Usage
 
@@ -105,7 +108,7 @@ response = await client.get(
 
 failed_tasks = response.json()
 if failed_tasks:
-    print(f"⚠️ Found {len(failed_tasks)} failed tasks!")
+    print(f"Found {len(failed_tasks)} failed tasks!")
 ```
 
 ### Combined Filters
@@ -130,7 +133,7 @@ response = await client.get(
 
 active_tasks = response.json()
 for task in active_tasks:
-    print(f"📋 {task['task_type']}: {task['task_status']} ({task['tag']})")
+    print(f"{task['task_type']}: {task['task_status']} ({task['tag']})")
 ```
 
 ### Pagination
@@ -143,7 +146,8 @@ curl "http://localhost:8000/tasks?limit=10&offset=0"
 curl "http://localhost:8000/tasks?limit=10&offset=10"
 ```
 
-## 🔧 Response Structure
+
+## Response Structure
 
 Each task in the response includes:
 
@@ -169,7 +173,8 @@ Each task in the response includes:
 | `created_at`  | datetime | When the task was created                      |
 | `end_date`    | datetime | When the task finished (null if still running) |
 
-## 🏗️ How It Works Behind the Scenes
+
+## How It Works Behind the Scenes
 
 The tasks endpoint uses a query building system that aggregates data from multiple database tables:
 
@@ -187,7 +192,8 @@ The tasks endpoint uses a query building system that aggregates data from multip
 
 4. **Sorting and Pagination**: Results are ordered by creation date (newest first) with pagination applied at the database level
 
-## 📈 Best Practices
+
+## Best Practices
 
 - **Use appropriate time windows**: Don't fetch all historical tasks
 - **Apply status filters**: Focus on relevant task states (Q, R for active tasks)
