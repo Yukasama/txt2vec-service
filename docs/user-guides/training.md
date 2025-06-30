@@ -1,66 +1,65 @@
-# Training-Modul
 
-Dieses Modul enthält die gesamte Logik für das Training von SBERT-Modellen (Sentence-BERT) inklusive Datenvalidierung, Trainingsorchestrierung, Fehlerbehandlung und Utilities für die Integration in REST-APIs.
+# Training Module
 
-## Trainingsprinzip
+This module contains all logic for training SBERT models (Sentence-BERT), including data validation, training orchestration, error handling, and utilities for REST API integration.
 
-Das Training erfolgt mit **Triplet-Losses** basierend auf Triplets bestehend aus:
-- **Anchor (Question)**: Ausgangsfrage oder Satz
-- **Positive**: Semantisch ähnliche Antwort
-- **Negative**: Semantisch unähnliche Antwort
+## Training Principle
 
-**Ziel:** Die Embeddings von Anchor und Positive sollen möglichst ähnlich (hohe Kosinus-Ähnlichkeit) sein, während die Embeddings von Anchor und Negative möglichst unähnlich (niedrige Kosinus-Ähnlichkeit) werden.
+Training is performed using **triplet losses** based on triplets consisting of:
+- **Anchor (Question)**: The initial question or sentence
+- **Positive**: Semantically similar answer
+- **Negative**: Semantically dissimilar answer
 
-Weitere Details siehe [SBERT-Dokumentation](https://www.sbert.net/docs/package_reference/losses.html).
+**Goal:** The embeddings of anchor and positive should be as similar as possible (high cosine similarity), while the embeddings of anchor and negative should be as dissimilar as possible (low cosine similarity).
 
+For more details, see the [SBERT documentation](https://www.sbert.net/docs/package_reference/losses.html).
 
-## Übersicht
+## Overview
 
-Das Trainingssystem ist modular aufgebaut und bietet:
+The training system is modular and provides:
 
-- **Datenvalidierung**: Sicherstellung, dass Trainingsdaten korrekt und vollständig sind
-- **Trainingsorchestrierung**: Kapselung des gesamten Trainingsablaufs (Vorbereitung, Training, Speichern, Aufräumen)
-- **Fehlerbehandlung**: Klare Fehlerklassen für alle typischen Fehlerfälle
-- **Integration**: Einfache Anbindung an FastAPI-Endpunkte und Datenbank
+- **Data validation**: Ensures training data is correct and complete
+- **Training orchestration**: Encapsulates the entire training process (preparation, training, saving, cleanup)
+- **Error handling**: Clear error classes for all typical error cases
+- **Integration**: Easy connection to FastAPI endpoints and database
 
-## Architektur
+## Architecture
 
-### Hauptkomponenten
+### Main Components
 
-1. **`tasks.py`**: Zentrale Trainingslogik (Background-Tasks)
-   - Training-Tasks für asynchrone Ausführung
-   - Integration mit Dramatiq für Task-Management
-   - Fehlerbehandlung und Status-Updates
+1. **`tasks.py`**: Central training logic (background tasks)
+   - Training tasks for asynchronous execution
+   - Integration with Dramatiq for task management
+   - Error handling and status updates
 
-2. **`service.py`**: Service-Layer für API-Integration
+2. **`service.py`**: Service layer for API integration
+   - Request validation
+   - Calling training tasks
+   - Error and status management
 
-   - Validierung von Requests
-   - Aufruf der Training-Tasks
-   - Fehler- und Statusmanagement
+3. **`router.py`**: REST API endpoints
+   - `POST /train`: Start training
+   - `GET /{task_id}/status`: Query status
+   - HTTP response handling
 
-3. **`router.py`**: REST-API Endpunkte
-   - `POST /train`: Training starten
-   - `GET /{task_id}/status`: Status abfragen
-   - HTTP Response-Handling
+4. **`repository.py`**: Database operations
+   - CRUD operations for training tasks
+   - Database model management
 
-4. **`repository.py`**: Datenbankoperationen
-   - CRUD-Operationen für Training-Tasks
-   - Datenbankmodell-Management
+5. **`utils/`**: Helper functions
+   - **`input_examples.py`**: Creation and filtering of training examples
+   - **`model_loader.py`**: Loading and initializing models
+   - **`cleanup.py`**: Resource management and cleanup
+   - **`safetensors_finder.py`**: Finding model files
 
-5. **`utils/`**: Hilfsfunktionen
-   - **`input_examples.py`**: Erstellung und Filterung von Trainingsbeispielen
-   - **`model_loader.py`**: Laden und Initialisieren von Modellen
-   - **`cleanup.py`**: Ressourcenmanagement und Aufräumarbeiten
-   - **`safetensors_finder.py`**: Auffinden von Modell-Dateien
-
-## Beispiel: Training per Python
+## Example: Training via Python
 
 ```python
 from vectorize.training.service import TrainingOrchestrator
 from vectorize.training.schemas import TrainRequest
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-# Training-Request erstellen
+# Create training request
 train_request = TrainRequest(
     model_tag="models--sentence-transformers--all-MiniLM-L6-v2",
     train_dataset_ids=["0b30b284-f7fe-4e6c-a270-17cafc5b5bcb"],
@@ -69,11 +68,11 @@ train_request = TrainRequest(
     learning_rate=2e-5,
 )
 
-# Training-Orchestrator verwenden
-db = AsyncSession()  # Ihre DB-Session
+# Use training orchestrator
+db = AsyncSession()  # Your DB session
 orchestrator = TrainingOrchestrator(db, task_id)
 
-# Training starten (asynchron)
+# Start training (async)
 await orchestrator.run_training(
     model_path=model_path,
     train_request=train_request,
@@ -82,9 +81,9 @@ await orchestrator.run_training(
 )
 ```
 
-## Beispiel: Training per REST-API
+## Example: Training via REST API
 
-Das Training wird als Background-Task gestartet und liefert eine Task-ID zurück:
+Training is started as a background task and returns a task ID:
 
 ```bash
 curl -X POST "http://localhost:8000/train" \
@@ -111,45 +110,61 @@ Response:
 }
 ```
 
-### Status abfragen
+### Query status
 
 ```bash
 curl "http://localhost:8000/training/{task_id}/status"
 ```
 
-### Alle verfügbaren Parameter
 
-Die API unterstützt alle wichtigen Sentence-Transformers Parameter:
+### All available parameters
 
-- `model_tag`: Basis-Modell aus der Datenbank
-- `train_dataset_ids`: Liste von Dataset-IDs (werden zusammengeführt)
-- `val_dataset_id`: Optional, für Validierung
-- `epochs`, `per_device_train_batch_size`, `learning_rate`
-- `warmup_steps`, `optimizer_name`, `scheduler`
-- `weight_decay`, `max_grad_norm`, `use_amp`
-- `show_progress_bar`, `evaluation_steps`, `output_path`
-- `save_best_model`, `save_each_epoch`, `save_optimizer_state`
-- `dataloader_num_workers`, `device`, `timeout_seconds`
+The API supports all important Sentence-Transformers parameters:
 
-## Fehlerbehandlung
+| Parameter                   | Type           | Description                                       |
+|-----------------------------|----------------|---------------------------------------------------|
+| `model_tag`                 | string         | Base model from the database                      |
+| `train_dataset_ids`         | string[]       | List of dataset IDs (merged)                      |
+| `val_dataset_id`            | string         | Optional, for validation                          |
+| `epochs`                    | int            | Number of training epochs                         |
+| `per_device_train_batch_size`| int           | Batch size per device                             |
+| `learning_rate`             | float          | Learning rate                                     |
+| `warmup_steps`              | int            | Steps for warmup                                  |
+| `optimizer_name`            | string         | Optimizer (e.g. AdamW)                            |
+| `scheduler`                 | string         | Scheduler (e.g. constantlr)                       |
+| `weight_decay`              | float          | Weight decay                                      |
+| `max_grad_norm`             | float          | Max gradient norm                                 |
+| `use_amp`                   | bool           | Automatic Mixed Precision                         |
+| `show_progress_bar`         | bool           | Show progress bar                                 |
+| `evaluation_steps`          | int            | Steps between evaluations                         |
+| `output_path`               | string         | Output directory for model                        |
+| `save_best_model`           | bool           | Save best model                                   |
+| `save_each_epoch`           | bool           | Save after each epoch                             |
+| `save_optimizer_state`      | bool           | Save optimizer state                              |
+| `dataloader_num_workers`    | int            | Number of workers for DataLoader                  |
+| `device`                    | string         | Device (e.g. cuda, cpu)                           |
+| `timeout_seconds`           | int            | Timeout for training (seconds)                    |
 
-Das System bietet detaillierte Fehlerklassen für verschiedene Szenarien:
 
-- **`InvalidDatasetIdError`**: Ungültige UUID oder fehlende Dataset-ID
-- **`InvalidModelIdError`**: Ungültiges Modell oder Modell-Tag nicht gefunden
-- **`TrainingDatasetNotFoundError`**: Trainingsdatensatz existiert nicht im Dateisystem
-- **`TrainingModelWeightsNotFoundError`**: Modellgewichte nicht gefunden
-- **`TrainingTaskNotFoundError`**: Training-Task mit gegebener ID nicht gefunden
-- **`DatasetValidationError`**: Datensatz hat falsche Struktur oder fehlerhafte Daten
-- **Timeout-Errors**: Training überschreitet das definierte Zeitlimit
+## Error Handling
 
-Alle Fehler werden detailliert geloggt und über die API zurückgegeben.
+The system provides detailed error classes for various scenarios:
 
-## Vollständige JSON-API-Referenz
+- **`InvalidDatasetIdError`**: Invalid UUID or missing dataset ID
+- **`InvalidModelIdError`**: Invalid model or model tag not found
+- **`TrainingDatasetNotFoundError`**: Training dataset does not exist in the filesystem
+- **`TrainingModelWeightsNotFoundError`**: Model weights not found
+- **`TrainingTaskNotFoundError`**: Training task with the given ID not found
+- **`DatasetValidationError`**: Dataset has wrong structure or invalid data
+- **Timeout errors**: Training exceeds the defined time limit
 
-### Training Request Beispiele
+All errors are logged in detail and returned via the API.
 
-**Minimal Training Request:**
+## Complete JSON API Reference
+
+### Training Request Examples
+
+**Minimal training request:**
 
 ```json
 {
@@ -158,7 +173,7 @@ Alle Fehler werden detailliert geloggt und über die API zurückgegeben.
 }
 ```
 
-**Standard Training Request:**
+**Standard training request:**
 
 ```json
 {
@@ -174,7 +189,7 @@ Alle Fehler werden detailliert geloggt und über die API zurückgegeben.
 }
 ```
 
-**Vollständige Training Request mit allen Parametern:**
+**Full training request with all parameters:**
 
 ```json
 {
@@ -204,9 +219,9 @@ Alle Fehler werden detailliert geloggt und über die API zurückgegeben.
 }
 ```
 
-### Training Response Beispiele
+### Training Response Examples
 
-**Training Start Response (202 Accepted):**
+**Training start response (202 Accepted):**
 
 ```json
 {
@@ -217,7 +232,7 @@ Alle Fehler werden detailliert geloggt und über die API zurückgegeben.
 }
 ```
 
-**Training Status Response:**
+**Training status response:**
 
 ```json
 {
@@ -230,9 +245,9 @@ Alle Fehler werden detailliert geloggt und über die API zurückgegeben.
 }
 ```
 
-### Datenaufteilung und Validierungslogik
+### Data Splitting and Validation Logic
 
-**Szenario 1: Mehrere Datasets mit expliziter Validierung**
+**Scenario 1: Multiple datasets with explicit validation**
 
 ```json
 {
@@ -241,9 +256,9 @@ Alle Fehler werden detailliert geloggt und über die API zurückgegeben.
 }
 ```
 
-→ **Ergebnis**: `validation-dataset-uuid` wird als Validierungsdatensatz verwendet
+→ **Result**: `validation-dataset-uuid` is used as the validation dataset
 
-**Szenario 2: Mehrere Datasets ohne explizite Validierung**
+**Scenario 2: Multiple datasets without explicit validation**
 
 ```json
 {
@@ -251,9 +266,9 @@ Alle Fehler werden detailliert geloggt und über die API zurückgegeben.
 }
 ```
 
-→ **Ergebnis**: System verknüpft alle Datensätze und teilt 90% Training / 10% Validierung
+→ **Result**: System merges all datasets and splits 90% training / 10% validation
 
-**Szenario 3: Einzelner Datensatz ohne Validierung**
+**Scenario 3: Single dataset without validation**
 
 ```json
 {
@@ -261,53 +276,53 @@ Alle Fehler werden detailliert geloggt und über die API zurückgegeben.
 }
 ```
 
-→ **Ergebnis**: Auto-Split von `single-dataset-uuid` → 90% Training / 10% Validierung
+→ **Result**: Auto-split of `single-dataset-uuid` → 90% training / 10% validation
 
-### Datenpfad-Beispiele
+### Data Path Examples
 
-**Training erstellt diese Pfade:**
+**Training creates these paths:**
 
-- Explizite Validierung: `data/datasets/my_validation_dataset.jsonl`
-- Auto-Split Validierung: `data/datasets/my_training_dataset.jsonl#auto-split`
+- Explicit validation: `data/datasets/my_validation_dataset.jsonl`
+- Auto-split validation: `data/datasets/my_training_dataset.jsonl#auto-split`
 
-### Parameter-Regeln
+### Parameter Rules
 
-**Erforderlich:**
+**Required:**
 
-- `model_tag`: Immer erforderlich
-- `train_dataset_ids`: Mindestens ein Dataset (Array mit min. 1 Element)
+- `model_tag`: Always required
+- `train_dataset_ids`: At least one dataset (array with min. 1 element)
 
 **Optional:**
 
-- `val_dataset_id`: Für explizite Validierungsdaten
-- Alle anderen Parameter haben Standardwerte
+- `val_dataset_id`: For explicit validation data
+- All other parameters have default values
 
-### Ungültige Kombinationen
+### Invalid Combinations
 
-**Fehlerhafte per_device_train_batch_size:**
+**Invalid per_device_train_batch_size:**
 ```json
 {
   "model_tag": "...",
   "train_dataset_ids": ["..."],
-  "per_device_train_batch_size": 0 // Fehler: muss > 0 sein
+  "per_device_train_batch_size": 0 // Error: must be > 0
 }
 ```
 
-**Fehlerhafte learning_rate:**
+**Invalid learning_rate:**
 
 ```json
 {
   "model_tag": "...",
   "train_dataset_ids": ["..."],
-  "learning_rate": 0 // Fehler: muss > 0 sein
+  "learning_rate": 0 // Error: must be > 0
 }
 ```
 
-## Integration mit Evaluation
+## Integration with Evaluation
 
-Nach erfolgreichem Training kann das trainierte Modell direkt evaluiert werden:
+After successful training, the trained model can be evaluated directly:
 
-**1. Training starten:**
+**1. Start training:**
 
 ```bash
 POST /train
@@ -319,7 +334,7 @@ POST /train
 }
 ```
 
-**2. Training-Task-ID aus Response extrahieren:**
+**2. Extract training task ID from response:**
 
 ```json
 {
@@ -329,7 +344,7 @@ POST /train
 }
 ```
 
-**3. Trainiertes Modell evaluieren:**
+**3. Evaluate trained model:**
 
 ```bash
 POST /evaluation/evaluate
@@ -340,46 +355,46 @@ POST /evaluation/evaluate
 }
 ```
 
-Diese Integration ermöglicht konsistente Evaluierung mit denselben Validierungsdaten, die beim Training verwendet wurden.
+This integration enables consistent evaluation with the same validation data used during training.
 
-## Testen
+## Testing
 
-Tests für das Trainingsmodul befinden sich in `tests/training/`:
+Tests for the training module are located in `tests/training/`:
 
 ```bash
 pytest tests/training/ -v
 ```
 
-- **Valid-Tests**: Erfolgreiches Training mit korrekten Daten
-- **Invalid-Tests**: Fehlerfälle und fehlerhafte Daten
+- **Valid tests**: Successful training with correct data
+- **Invalid tests**: Error cases and invalid data
 
-## Datenformat
+## Data Format
 
-Das System erwartet JSONL-Dateien mit folgender Struktur:
+The system expects JSONL files with the following structure:
 
 ```json
-{"question": "Was ist maschinelles Lernen?", "positive": "ML ist ein Teilbereich der KI", "negative": "Das Wetter ist heute schön"}
-{"question": "Wie funktioniert Deep Learning?", "positive": "Mit neuronalen Netzen", "negative": "Pizza schmeckt gut"}
+{"question": "What is machine learning?", "positive": "ML is a subfield of AI", "negative": "The weather is nice today"}
+{"question": "How does deep learning work?", "positive": "With neural networks", "negative": "Pizza tastes good"}
 ```
 
-**Erforderliche Spalten:**
+**Required columns:**
 
-- `question`: Die Ausgangsfrage oder der Anchor
-- `positive`: Semantisch ähnliche/korrekte Antwort
-- `negative`: Semantisch unähnliche/falsche Antwort
+- `question`: The initial question or anchor
+- `positive`: Semantically similar/correct answer
+- `negative`: Semantically dissimilar/incorrect answer
 
-**Validierung:**
+**Validation:**
 
-- Alle Spalten müssen vorhanden sein
-- Keine NULL-Werte oder leere Strings
-- Mindestens ein Trainingseintrag erforderlich
+- All columns must be present
+- No NULL values or empty strings
+- At least one training entry required
 
-## Leseliteratur
+## Further Reading
 
-### Was sind Sentence-Transformers?
+### What are Sentence-Transformers?
 
-Sentence-Transformers sind spezialisierte Modelle, die auf BERT, RoBERTa oder ähnlichen Architekturen basieren und darauf trainiert sind, ganze Sätze oder Textabschnitte als dichte Vektoren (Embeddings) im semantischen Raum abzubilden. Dadurch können semantisch ähnliche Sätze durch ähnliche Vektoren repräsentiert werden.
+Sentence-Transformers are specialized models based on BERT, RoBERTa, or similar architectures, trained to map entire sentences or text passages as dense vectors (embeddings) in semantic space. This allows semantically similar sentences to be represented by similar vectors.
 
 ---
 
-Für Details siehe auch die Docstrings in den jeweiligen Modulen und die API-Dokumentation (Swagger/OpenAPI).
+For details, also see the docstrings in the respective modules and the API documentation (Swagger/OpenAPI).
