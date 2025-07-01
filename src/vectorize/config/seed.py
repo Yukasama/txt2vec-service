@@ -317,8 +317,6 @@ async def seed_db(session: AsyncSession) -> None:
         (AI_MODEL_LOCALTRAINMODEL_ID, timedelta(days=30)),
     ]
 
-    now = datetime.now(tz=UTC)
-
     for model_id, delta in entries:
         session.add(InferenceCounter(
             ai_model_id=model_id,
