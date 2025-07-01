@@ -3044,7 +3044,7 @@ requires-dist = [
     { name = "pyfiglet", specifier = ">=1.0.2" },
     { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "redis", specifier = ">=6.2.0" },
-    { name = "sentence-transformers", specifier = ">=4.1.0" },
+    { name = "sentence-transformers", specifier = "==5.0.0" },
     { name = "sqlmodel", specifier = ">=0.0.24" },
     { name = "torch", specifier = ">=2.6.0" },
     { name = "transformers", specifier = ">=4.51.3" },

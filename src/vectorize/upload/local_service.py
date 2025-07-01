@@ -20,6 +20,7 @@ from .exceptions import (
     NoValidModelsFoundError,
 )
 from .utils.zip_extractor import (
+    _is_safe_path,
     process_model_directory,
     process_single_model,
     save_zip_to_temp,
@@ -221,8 +222,12 @@ async def upload_zip_model(
     if not file.filename or not file.filename.lower().endswith(".zip"):
         raise InvalidModelError("Only ZIP archives are supported")
 
-    base_name = model_name or Path(file.filename).stem
-    base_dir = Path(settings.model_upload_dir)
+    base_name = "".join(
+        c if c.isalnum() else "_" for c in (model_name or Path(file.filename).stem)
+    )
+    base_dir = Path(settings.model_upload_dir).resolve()
+    if not _is_safe_path(base_dir / base_name, base_dir):
+        raise InvalidModelError("Unsafe model name or path detected")
     temp_path = None
     processed_models = []
 

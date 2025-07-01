@@ -299,9 +299,7 @@ def _create_model_from_config(cfg: PretrainedConfig) -> torch.nn.Module:
 
     logger.info("Standard model detected - using AutoModel")
     if architectures:
-        logger.debug(
-            "  Architecture: {}", architectures[0] if architectures else "None"
-        )
+        logger.debug("  Architecture: {}", architectures[0])
     return AutoModel.from_config(cfg)
 
 
@@ -379,7 +377,6 @@ def instantiate_from_weights(folder: Path, cfg: PretrainedConfig) -> torch.nn.Mo
 
     logger.debug("Searching for weight files in {}", folder)
 
-    # Try different weight loading strategies
     weight_loading_strategies = [
         lambda: _load_safetensors_weights(folder, model),
         lambda: _load_pytorch_weights(folder, model),
@@ -389,7 +386,6 @@ def instantiate_from_weights(folder: Path, cfg: PretrainedConfig) -> torch.nn.Mo
         if strategy():
             return model.eval()
 
-    # If no weights were loaded successfully
     available_files = [f.name for f in folder.iterdir() if f.is_file()]
     logger.error(
         "No weight files found in {}. Available files: {}", folder, available_files

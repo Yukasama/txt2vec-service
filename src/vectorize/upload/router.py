@@ -181,13 +181,17 @@ async def load_model_local(
     if not file.filename or not file.filename.lower().endswith(".zip"):
         raise InvalidFileError("Only ZIP archives are supported")
 
+    sanitized_model_name = (
+        "".join(c if c.isalnum() else "_" for c in model_name) if model_name else None
+    )
+
     logger.debug(
         "Multi-model ZIP upload: '{}' with {} bytes",
         file.filename,
         file.size if hasattr(file, "size") else "unknown size",
     )
 
-    result = await upload_zip_model(file, model_name, db, multi_model=True)
+    result = await upload_zip_model(file, sanitized_model_name, db, multi_model=True)
 
     model_count = result["total_models"]
     logger.info(f"Successfully uploaded {model_count} models from ZIP archive")

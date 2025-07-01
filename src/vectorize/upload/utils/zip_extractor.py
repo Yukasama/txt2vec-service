@@ -2,6 +2,7 @@
 
 import asyncio
 import contextlib
+import os
 import tempfile
 import zipfile
 from pathlib import Path
@@ -24,7 +25,12 @@ from ..exceptions import (
 )
 from .zip_validator import validate_model_files
 
-__all__ = ["process_model_directory", "process_single_model", "save_zip_to_temp"]
+__all__ = [
+    "_is_safe_path",
+    "process_model_directory",
+    "process_single_model",
+    "save_zip_to_temp",
+]
 
 ALLOWED_EXTENSIONS = {".pt", ".pth", ".bin", ".model", ".safetensors", ".json"}
 MAX_FILENAME_LENGTH = 255
@@ -46,8 +52,8 @@ def _is_safe_path(target_path: Path, base_path: Path) -> bool:
         True if path is safe, False otherwise
     """
     try:
-        resolved_target = target_path.resolve()
-        resolved_base = base_path.resolve()
+        resolved_target = Path(os.path.realpath(target_path))
+        resolved_base = Path(os.path.realpath(base_path))
 
         return resolved_target.is_relative_to(resolved_base)
     except (OSError, ValueError):
