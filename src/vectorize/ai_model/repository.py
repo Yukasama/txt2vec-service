@@ -92,8 +92,7 @@ async def get_models_paged_db(
             )
         )
     )
-    total_count_result = await db.exec(total_count_stmt)
-    total_count = total_count_result.scalar_one()  # type: ignore[reportArgumentType]
+    total_count = await db.scalar(total_count_stmt) or 0  # type: ignore[reportArgumentType]
 
     if total_count == 0:
         raise ModelNotFoundError()
