@@ -45,8 +45,8 @@ UPLOAD_TASK_HF_ID = UUID("d2f3e4b8-8c7f-4d2a-9f1e-0a6f3e4d2a5c")
 PAGED_MODEL_ID_ONE = UUID("d2f3e4b8-8c7f-4d2a-9f1e-0a6f3e4d2a5d")
 PAGED_MODEL_ID_TWO = UUID("d2f3e4b8-8c7f-4d2a-9f1e-0a6f3e4d2a5e")
 PAGED_MODEL_ID_THREE = UUID("d2f3e4b8-8c7f-4d2a-9f1e-0a6f3e4d2a5f")
-PAGED_MODEL_ID_FOUR = UUID("d2f3e4b8-8c7f-4d2a-9f1e-0a6f3e4d2a5g")
-PAGED_MODEL_ID_FIVE = UUID("d2f3e4b8-8c7f-4d2a-9f1e-0a6f3e4d2a5h")
+PAGED_MODEL_ID_FOUR = UUID("d2f3e4b8-8c7f-4d2a-9f1e-0a6f3e4d2a50")
+PAGED_MODEL_ID_FIVE = UUID("d2f3e4b8-8c7f-4d2a-9f1e-0a6f3e4d2a51")
 
 
 async def seed_db(session: AsyncSession) -> None:
