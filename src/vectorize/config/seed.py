@@ -320,7 +320,10 @@ async def seed_db(session: AsyncSession) -> None:
     now = datetime.now(tz=UTC)
 
     for model_id, delta in entries:
-        session.add(InferenceCounter(ai_model_id=model_id, created_at=now - delta))
+        session.add(InferenceCounter(
+            ai_model_id=model_id,
+            created_at=datetime.now(tz=UTC) - delta)
+        )
     await session.commit()
 
     logger.info("Database seeded with initial data")

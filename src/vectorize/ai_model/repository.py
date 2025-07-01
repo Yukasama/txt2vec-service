@@ -28,7 +28,7 @@ async def get_models_paged_db(
     page: int = 1,
     size: int = 5,
 ) -> tuple[Sequence[AIModel], int]:
-    """Fetches a page of AIModel entries from the database, ordered by inference count.
+    """Fetches a sorted by recent inference (30 days) page of AIModel entries.
 
     Args:
         db (AsyncSession): The database session.
@@ -42,10 +42,7 @@ async def get_models_paged_db(
     Raises:
         NoModelFoundError: If there are no models in the database.
     """
-    from vectorize.inference.models import (
-        InferenceCounter,  # FIX circular import then move to top level statement
-    )
-
+    from vectorize.inference.models import InferenceCounter  # noqa: PLC0415
     page = max(1, page)
     size = max(1, size)
     cutoff_date = datetime.now(UTC) - timedelta(days=30)
