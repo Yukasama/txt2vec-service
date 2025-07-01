@@ -5,33 +5,33 @@ skinparam actorStyle awesome
 actor User
 
 package "Model Upload Service" {
-    usecase UC_Github as "Upload GitHub Model"
-    usecase UC_HF as "Upload HuggingFace Model"
-    usecase UC_Zip as "Upload ZIP Archive"
+    usecase Github as "Upload GitHub Model"
+    usecase HF as "Upload HuggingFace Model"
+    usecase Zip as "Upload ZIP Archive"
 
-    usecase UC_CreateTask as "Create Upload Task"
-    usecase UC_BGProcess as "Background Process Upload"
-    usecase UC_SaveDB as "Save Model to DB"
-    usecase UC_ValidateFiles as "Validate Model Files"
-    usecase UC_CacheModel as "Cache Model Locally"
+    usecase CreateTask as "Create Upload Task"
+    usecase BGProcess as "Background Process Upload"
+    usecase SaveDB as "Save Model to DB"
+    usecase ValidateFiles as "Validate Model Files"
+    usecase CacheModel as "Cache Model Locally"
 }
 
-User --> UC_Github : Request upload\n(owner, repo, branch)
-User --> UC_HF : Request upload\n(model_tag, revision)
-User --> UC_Zip : Upload ZIP file\n(optional base name)
+User --> Github : Request upload\n(owner, repo, branch)
+User --> HF : Request upload\n(modeltag, revision)
+User --> Zip : Upload ZIP file\n(optional base name)
 
-UC_Github --> UC_CreateTask
-UC_HF --> UC_CreateTask
-UC_Zip --> UC_CreateTask
+Github --> CreateTask
+HF --> CreateTask
+Zip --> CreateTask
 
-UC_CreateTask --> UC_BGProcess
+CreateTask --> BGProcess
 
-UC_BGProcess --> UC_ValidateFiles
-UC_BGProcess --> UC_CacheModel
-UC_BGProcess --> UC_SaveDB
+BGProcess --> ValidateFiles
+BGProcess --> CacheModel
+BGProcess --> SaveDB
 
-UC_ValidateFiles --> UC_BGProcess : success or fail
-UC_CacheModel --> UC_BGProcess : success or fail
-UC_SaveDB --> UC_BGProcess : success or fail
+ValidateFiles --> BGProcess : sucess or fail
+CacheModel --> BGProcess : sucess or fail
+SaveDB --> BGProcess : sucess or fail
 
 @enduml
