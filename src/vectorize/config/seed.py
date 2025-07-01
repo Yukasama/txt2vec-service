@@ -293,7 +293,7 @@ async def seed_db(session: AsyncSession) -> None:
 
     entries = [
     (AI_MODEL_LOCALTRAINMODEL_ID, timedelta(minutes=30)),
-    (AI_MODEL_MINILM_ID, timedelta(minutes=30))
+    (AI_MODEL_MINILM_ID, timedelta(minutes=30)),
     (AI_MODEL_READ_ID, timedelta(minutes=30)),
     (AI_MODEL_READ_ID, timedelta(minutes=30)),
     (AI_MODEL_DELETE_ID, timedelta(minutes=30)),
