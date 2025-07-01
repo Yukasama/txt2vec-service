@@ -3,7 +3,7 @@
 from uuid import UUID
 
 from loguru import logger
-from sqlmodel import func, select
+from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from vectorize.ai_model.exceptions import ModelNotFoundError
@@ -62,29 +62,3 @@ async def get_model_count(
     results_list = list(results)
     logger.debug("Model count of AI Model", length=results_list)
     return results_list
-
-
-async def get_inference_count_by_model_id(
-    db: AsyncSession, ai_model_id: UUID
-) -> int:
-    """Return total number of inferences for a specific AI model.
-
-    Args:
-    db: Database session instance.
-    ai_model_id: The id of the AI model.
-
-    Returns:
-        list[InferenceCounter]: List of inference counter records for the model.
-    """
-    model_check = await db.scalar(select(AIModel.id).where(AIModel.id == ai_model_id))
-    if model_check is None:
-        logger.debug("AI Model not found", model_id=ai_model_id)
-        raise ModelNotFoundError(ai_model_id)
-
-    count_stmt = select(func.count()).where(
-        InferenceCounter.ai_model_id == ai_model_id
-    )
-    result = await db.scalar(count_stmt)
-
-    logger.debug("Inference count retrieved", model_id=ai_model_id, count=result)
-    return result or 0
