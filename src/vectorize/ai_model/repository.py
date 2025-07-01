@@ -9,6 +9,7 @@ from sqlmodel import and_, func, or_, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from vectorize.common.exceptions import VersionMismatchError
+from vectorize.config import settings
 
 from .exceptions import ModelNotFoundError
 from .models import AIModel, AIModelUpdate
@@ -45,7 +46,7 @@ async def get_models_paged_db(
     from vectorize.inference.models import InferenceCounter  # noqa: PLC0415
     page = max(1, page)
     size = max(1, size)
-    cutoff_date = datetime.now(UTC) - timedelta(days=30)
+    cutoff_date = datetime.now(UTC) - timedelta(days=settings.model_inference_limiter)
     offset = (page - 1) * size
 
     statement = (
