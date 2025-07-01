@@ -72,7 +72,8 @@ dependencies = [
     "dramatiq>=1.18.0",
     "redis>=6.2.0",
     "sentence-transformers>=4.1.0",
-    "accelerate>=1.7.0"
+    "accelerate>=1.7.0",
+    "gunicorn>=23.0.0",
 ]
 
 [project.scripts]
@@ -102,6 +103,7 @@ dev = [
     "mkdocs-material>=9.6.14",
     "mkdocstrings[python]>=0.29.1",
     "testcontainers[redis]>=4.10.0",
+    "vulture>=2.14",
 ]
 
 [tool.hatch.build.targets.sdist]

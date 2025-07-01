@@ -7,8 +7,8 @@ dev_addr: "localhost:8001"
 
 theme:
   name: material
-  favicon: logo/AlgoForge.png
-  logo: logo/AlgoForge.png
+  favicon: logo/favicon.ico
+  logo: logo/android-chrome-192x192.png
   palette:
     - media: "(prefers-color-scheme)"
       primary: deep purple

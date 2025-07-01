@@ -58,4 +58,4 @@ ENV PATH="/app/.venv/bin:/usr/bin:$PATH" \
 EXPOSE 8000
 STOPSIGNAL SIGINT
 
-CMD ["uvicorn", "vectorize.app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["gunicorn", "vectorize.app:app", "-w", "1", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]

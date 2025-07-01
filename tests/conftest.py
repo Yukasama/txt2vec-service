@@ -54,7 +54,7 @@ def flush_redis() -> None:
 def redis_container() -> Generator[RedisContainer]:
     """Fixture to start a Redis container for testing."""
     container: RedisContainer = (
-        RedisContainer("redis:7.2-alpine")
+        RedisContainer("redis:7-alpine")
         .with_bind_ports(6379, REDIS_TEST_PORT)
         .with_env("REDIS_REPLICATION_MODE", "master")
         .with_env("save", "")
@@ -104,7 +104,7 @@ async def session() -> AsyncGenerator[AsyncSession]:
         poolclass=StaticPool,
         connect_args={
             "check_same_thread": False,
-            "timeout": 30,
+            "timeout": 60,
             "isolation_level": None,
         },
         echo=False,

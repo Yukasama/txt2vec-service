@@ -1,7 +1,8 @@
 services:
   redis:
-    image: redis:7.2-alpine
+    image: redis:7-alpine
     container_name: vectorize_redis
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
     networks: [vectorize-network]
     restart: unless-stopped
     cap_drop: [ALL]
@@ -16,7 +17,7 @@ services:
   dramatiq_worker:
     build: ../..
     container_name: vectorize_dramatiq_worker
-    command: ["dramatiq", "vectorize.tasks", "-p", "4", "--verbose"]
+    command: ["dramatiq", "vectorize.tasks", "-p", "4", "-t", "4", "--verbose"]
     networks: [vectorize-network]
     environment:
       ENV: production
@@ -39,7 +40,7 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "ps aux | grep '[d]ramatiq' || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
+      interval: 60s
+      timeout: 15s
+      retries: 5
+      start_period: 60s

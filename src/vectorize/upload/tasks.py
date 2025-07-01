@@ -92,7 +92,7 @@ async def process_huggingface_model_bg(
 
 
 @dramatiq.actor(max_retries=3)
-async def process_github_model_bg(  # noqa: D417
+async def process_github_model_bg(
     owner: str, repo: str, branch: str, task_id: str
 ) -> None:
     """Processes a GitHub model upload in the background.
@@ -102,11 +102,10 @@ async def process_github_model_bg(  # noqa: D417
     the task status.
 
     Args:
-        db (AsyncSession): The database session for database operations.
-        owner (str):
-        repo (str):
-        branch (str):
-        task_id (UUID): The unique identifier of the upload task.
+        owner: The GitHub repository owner/organization name.
+        repo: The GitHub repository name.
+        branch: The Git branch to download from.
+        task_id: The unique identifier of the upload task.
 
     Raises:
         Exception: If an error occurs during model processing or database operations.

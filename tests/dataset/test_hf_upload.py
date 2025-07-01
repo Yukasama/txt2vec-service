@@ -12,7 +12,6 @@ from fastapi.testclient import TestClient
 from tests.wait_for_task import wait_for_task
 from vectorize.config.config import settings
 
-_TIMEOUT = 45  # seconds
 _FILE_SIZE_THRESHOLD = 100
 
 
