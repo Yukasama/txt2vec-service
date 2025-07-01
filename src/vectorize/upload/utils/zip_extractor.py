@@ -55,7 +55,7 @@ def _is_safe_path(target_path: Path, base_path: Path) -> bool:
         resolved_target = Path(os.path.realpath(target_path))
         resolved_base = Path(os.path.realpath(base_path))
 
-        return resolved_target.is_relative_to(resolved_base)
+        return str(resolved_target).startswith(str(resolved_base) + os.sep)
     except (OSError, ValueError):
         return False
 

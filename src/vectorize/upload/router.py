@@ -182,7 +182,9 @@ async def load_model_local(
         raise InvalidFileError("Only ZIP archives are supported")
 
     sanitized_model_name = (
-        "".join(c if c.isalnum() else "_" for c in model_name) if model_name else None
+        "".join(c if c.isalnum() else "_" for c in model_name).strip("_")
+        if model_name
+        else None
     )
 
     logger.debug(
