@@ -16,6 +16,7 @@ services:
       MODELS_DIR: /app/data/models
       DB_DIR: /app/db
       TZ: Europe/Berlin
+      LOG_LEVEL: DEBUG
       HF_HOME: /app/data/hf_home
     networks: [vectorize-network]
     restart: unless-stopped

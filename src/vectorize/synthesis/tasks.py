@@ -2,16 +2,13 @@
 
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 import aiofiles
 import dramatiq
+import pandas as pd
 from loguru import logger
 from sqlmodel.ext.asyncio.session import AsyncSession
-
-if TYPE_CHECKING:
-    import pandas as pd
 
 from vectorize.config import settings
 from vectorize.config.db import engine
@@ -168,23 +165,18 @@ async def process_existing_dataset_background_bg(
                 sourceDatasetId=dataset_uuid,
             )
 
-            # Load and validate source dataset
             source_dataset, dataset_file_path = await _load_and_validate_source_dataset(
                 db, dataset_uuid
             )
 
-            # Extract text from media
             df = extract_text_from_media(dataset_file_path, "dataset", options)
 
-            # Determine classification
             classification = _determine_classification(df)
 
-            # Create synthetic dataset
             new_dataset_id = await _create_synthetic_dataset_from_existing(
                 db, task_uuid, source_dataset, df, classification
             )
 
-            # Mark task as complete
             await update_synthesis_task_status(db, task_uuid, TaskStatus.DONE)
 
             logger.info(
@@ -342,22 +334,17 @@ async def _process_single_file(
     Returns:
         Dataset ID if successful, None otherwise
     """
-    # Validate file format and size
     ext = _validate_file_for_processing(filename, content)
     if ext is None:
         return None
 
-    # Create temporary file
     temp_path = await _create_temp_file(content, ext)
 
     try:
-        # Extract text from media
         df = extract_text_from_media(temp_path, ext, options)
 
-        # Determine classification
         classification = _determine_classification(df)
 
-        # Create and save dataset
         dataset_id = await _create_synthetic_dataset(
             db, task_id, filename, df, classification
         )
@@ -371,7 +358,6 @@ async def _process_single_file(
         return dataset_id
 
     finally:
-        # Clean up temporary file
         _cleanup_temp_file(temp_path)
 
 

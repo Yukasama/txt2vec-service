@@ -14,7 +14,14 @@ __all__ = ["create_model_cache"]
 
 
 def _get_cache_file_path() -> str:
-    """Get cache file path from environment or use default."""
+    """Get cache file path from environment or use default.
+
+    Returns:
+        Path to cache file as string
+
+    Raises:
+        OSError: If cache directory cannot be created (logged as warning)
+    """
     cache_dir = os.getenv("CACHE_DIR", "data/cache")
     cache_path = Path(cache_dir) / "model_usage_stats.json"
 
@@ -30,7 +37,14 @@ def _get_cache_file_path() -> str:
 def create_model_cache(
     cache_file: str | None = None,
 ) -> ModelCache | VRAMModelCache:
-    """Factory-Funktion für Cache basierend auf Konfiguration."""
+    """Factory function for creating cache based on configuration.
+
+    Args:
+        cache_file: Optional path to cache file, uses default if None
+
+    Returns:
+        ModelCache or VRAMModelCache instance based on settings
+    """
     if cache_file is None:
         cache_file = _get_cache_file_path()
 

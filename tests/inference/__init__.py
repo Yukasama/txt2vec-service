@@ -1,1 +1,1 @@
-﻿"""Inference tests module."""
+"""Inference tests module."""

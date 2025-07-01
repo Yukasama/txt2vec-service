@@ -21,6 +21,7 @@ with Path.open(_app_config_path, "rb") as f:
     _model_config = _app_config.get("model", {})
     _dataset_config = _app_config.get("dataset", {})
     _inference_config = _app_config.get("inference", {})
+    _cache_config = _app_config.get("cache", {})
     _evaluation_config = _app_config.get("evaluation", {})
 
 
@@ -233,25 +234,22 @@ class Settings(BaseSettings):
     # Cache Strategie
 
     cache_strategy: Literal["fixed_size", "vram_aware"] = Field(
-        default="fixed_size",
+        default=_cache_config.get("strategy", "fixed_size"),
         description="Cache strategy: fixed_size or vram_aware",
-        validation_alias="CACHE_STRATEGY",
     )
 
     # Fixed Size Strategie Parameter
 
     cache_max_models: int = Field(
-        default=5,
+        default=_cache_config.get("max_models", 5),
         description="Maximum number of models in cache (fixed_size strategy)",
-        validation_alias="CACHE_MAX_MODELS",
     )
 
     # Vram Aware Strategie Parameter
 
     cache_vram_safety_margin_gb: float = Field(
-        default=1.0,
+        default=_cache_config.get("vram_safety_margin_gb", 1.0),
         description="VRAM safety margin in GB (vram_aware strategy)",
-        validation_alias="CACHE_VRAM_SAFETY_MARGIN_GB",
     )
 
     # Evaluation configuration

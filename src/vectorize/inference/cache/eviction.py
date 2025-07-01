@@ -23,11 +23,25 @@ class CacheEviction:
         self.max_models = max_models
 
     def should_evict(self, cache_size: int) -> bool:
-        """Check if eviction is necessary."""
+        """Check if eviction is necessary.
+
+        Args:
+            cache_size: Current number of models in cache
+
+        Returns:
+            True if eviction is needed, False otherwise
+        """
         return cache_size >= self.max_models
 
     def select_eviction_candidate(self, cache: OrderedDict) -> str | None:
-        """Select model for eviction based on usage score."""
+        """Select model for eviction based on usage score.
+
+        Args:
+            cache: Cache containing models
+
+        Returns:
+            Model tag to evict, or None if cache is empty
+        """
         if not cache:
             return None
 
@@ -38,7 +52,12 @@ class CacheEviction:
         return min(scores.keys(), key=lambda x: scores[x])
 
     def evict_model(self, cache: OrderedDict, model_tag: str) -> None:
-        """Remove model from cache and free memory."""
+        """Remove model from cache and free memory.
+
+        Args:
+            cache: Cache containing models
+            model_tag: Tag of the model to evict
+        """
         if model_tag not in cache:
             return
 

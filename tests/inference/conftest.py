@@ -1,4 +1,3 @@
-
 """Pytest configuration and fixtures for inference tests."""
 
 import tempfile

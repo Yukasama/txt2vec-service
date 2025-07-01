@@ -3,14 +3,11 @@
 import base64
 import struct
 from collections.abc import Iterable
-from typing import TYPE_CHECKING
+from typing import Any
 
 import torch
 from loguru import logger
 from transformers import AutoTokenizer
-
-if TYPE_CHECKING:
-    from typing import Any
 
 from vectorize.ai_model.exceptions import ModelLoadError, UnsupportedModelError
 from vectorize.config import settings

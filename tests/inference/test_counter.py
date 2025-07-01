@@ -12,12 +12,12 @@ _BAD_MODEL_NAME = "nonexistent_model"
 
 @pytest.mark.asyncio
 @pytest.mark.inference
-class TestEmbeddings:
-    """Tests for the embeddings endpoint."""
+class TestInferenceCounter:
+    """Tests for the embeddings inference counter."""
 
     @classmethod
-    async def test_basic_embedding(cls, client: TestClient) -> None:
-        """Test basic embedding generation with a simple input."""
+    async def test_basic_counter_increment(cls, client: TestClient) -> None:
+        """Test basic counter increment with successful embedding requests."""
         payload = {"model": _MODEL_NAME, "input": "This is a test sentence."}
 
         # Check inference counter
@@ -45,8 +45,8 @@ class TestEmbeddings:
         assert counter_response.json()[first_key] == current_count + 2
 
     @classmethod
-    async def test_faulty_embedding(cls, client: TestClient) -> None:
-        """Test faulty embedding generation with a non-existent model."""
+    async def test_nonexistent_model_counter(cls, client: TestClient) -> None:
+        """Test counter behavior with non-existent model requests."""
         payload = {"model": _BAD_MODEL_NAME, "input": "This is a test sentence."}
 
         # Check inference counter

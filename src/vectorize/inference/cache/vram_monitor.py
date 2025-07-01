@@ -33,19 +33,31 @@ class VRAMMonitor:
             logger.info("VRAM Monitor initialized for CPU - unlimited memory")
 
     def get_total_vram(self) -> int:
-        """Get total VRAM in bytes."""
+        """Get total VRAM in bytes.
+
+        Returns:
+            Total VRAM in bytes, or sys.maxsize for CPU
+        """
         if self.is_cuda:
             return torch.cuda.get_device_properties(self.device).total_memory
         return sys.maxsize
 
     def get_used_vram(self) -> int:
-        """Get currently used VRAM in bytes."""
+        """Get currently used VRAM in bytes.
+
+        Returns:
+            Used VRAM in bytes, or 0 for CPU
+        """
         if self.is_cuda:
             return torch.cuda.memory_allocated(self.device)
         return 0
 
     def get_available_vram(self) -> int:
-        """Get available VRAM minus safety margin in bytes."""
+        """Get available VRAM minus safety margin in bytes.
+
+        Returns:
+            Available VRAM in bytes, or sys.maxsize for CPU
+        """
         if self.is_cuda:
             total = self.get_total_vram()
             used = self.get_used_vram()
@@ -55,7 +67,14 @@ class VRAMMonitor:
 
     @staticmethod
     def estimate_model_vram(model: torch.nn.Module) -> int:
-        """Estimate VRAM consumption of a model in bytes."""
+        """Estimate VRAM consumption of a model in bytes.
+
+        Args:
+            model: PyTorch model to estimate
+
+        Returns:
+            Estimated VRAM usage in bytes (includes 20% overhead)
+        """
         total_size = 0
 
         for param in model.parameters():
@@ -67,7 +86,14 @@ class VRAMMonitor:
         return int(total_size * 1.2)
 
     def can_fit_model(self, estimated_vram: int) -> bool:
-        """Check if model fits in available VRAM."""
+        """Check if model fits in available VRAM.
+
+        Args:
+            estimated_vram: Estimated VRAM requirement in bytes
+
+        Returns:
+            True if model can fit, False otherwise
+        """
         available = self.get_available_vram()
         can_fit = available >= estimated_vram
 
@@ -81,7 +107,11 @@ class VRAMMonitor:
         return can_fit
 
     def get_vram_info(self) -> dict:
-        """Get VRAM status for monitoring."""
+        """Get VRAM status for monitoring.
+
+        Returns:
+            Dictionary with VRAM usage information
+        """
         if not self.is_cuda:
             return {"device": "cpu", "unlimited": True}
 

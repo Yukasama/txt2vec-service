@@ -87,13 +87,10 @@ async def _process_existing_dataset(
 
     return {
         "message": (
-            "Synthetic task with existing dataset created, "
-            "processing in background."
+            "Synthetic task with existing dataset created, processing in background."
         ),
         "task_id": task.id,
-        "status_url": str(
-            request.url_for("get_synthesis_task_info", task_id=task.id)
-        ),
+        "status_url": str(request.url_for("get_synthesis_task_info", task_id=task.id)),
         "dataset_id": dataset_db.id,
     }
 

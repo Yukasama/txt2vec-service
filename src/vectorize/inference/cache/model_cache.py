@@ -18,7 +18,14 @@ __all__ = ["ModelCache"]
 
 
 def _timestamp_to_iso(timestamp: int) -> str:
-    """Convert Unix timestamp to ISO format string."""
+    """Convert Unix timestamp to ISO format string.
+
+    Args:
+        timestamp: Unix timestamp to convert
+
+    Returns:
+        ISO format string or "Never" if timestamp is 0
+    """
     if timestamp == 0:
         return "Never"
     return datetime.fromtimestamp(timestamp, tz=UTC).isoformat()
@@ -55,7 +62,15 @@ class ModelCache:
     def get(
         self, model_tag: str, loader_func: ModelLoader
     ) -> tuple[torch.nn.Module, AutoTokenizer | None]:
-        """Get model from cache or load it if not cached."""
+        """Get model from cache or load it if not cached.
+
+        Args:
+            model_tag: Identifier for the model
+            loader_func: Function to load the model
+
+        Returns:
+            Tuple of (model, tokenizer) where tokenizer can be None
+        """
         with self.lock:
             self.usage_tracker.track_access(model_tag)
 
@@ -80,7 +95,11 @@ class ModelCache:
         return model_data
 
     def get_info(self) -> dict:
-        """Get cache information for monitoring."""
+        """Get cache information for monitoring.
+
+        Returns:
+            Dictionary containing cache status and usage statistics
+        """
         with self.lock:
             cached_models_sorted = []
             if self.cache:
@@ -106,7 +125,11 @@ class ModelCache:
             }
 
     def clear(self) -> None:
-        """Clear cache completely."""
+        """Clear cache completely.
+
+        Raises:
+            Exception: If cleaning up models fails (logged as warning)
+        """
         with self.lock:
             for model_tag, (model, _) in self.cache.items():
                 try:

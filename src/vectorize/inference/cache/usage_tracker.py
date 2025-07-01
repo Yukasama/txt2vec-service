@@ -27,7 +27,11 @@ class UsageTracker:
         self._load_stats()
 
     def track_access(self, model_tag: str) -> None:
-        """Register a model access."""
+        """Register a model access.
+
+        Args:
+            model_tag: Identifier for the model being accessed
+        """
         current_time = time.time()
         stats = self.stats[model_tag]
 
@@ -39,7 +43,14 @@ class UsageTracker:
         stats["last_access"] = int(current_time)
 
     def calculate_score(self, model_tag: str) -> float:
-        """Calculate usage score for eviction decision."""
+        """Calculate usage score for eviction decision.
+
+        Args:
+            model_tag: Identifier for the model
+
+        Returns:
+            Usage score (higher means more recently/frequently used)
+        """
         current_time = time.time()
         stats = self.stats[model_tag]
 
@@ -49,11 +60,19 @@ class UsageTracker:
         return float(stats["count"])
 
     def get_stats(self) -> dict[str, Any]:
-        """Return all usage statistics."""
+        """Return all usage statistics.
+
+        Returns:
+            Dictionary with usage statistics for all models
+        """
         return dict(self.stats)
 
     def save_stats(self) -> None:
-        """Save statistics to disk."""
+        """Save statistics to disk.
+
+        Raises:
+            Exception: If saving fails (logged as warning)
+        """
         try:
             self.cache_file.parent.mkdir(parents=True, exist_ok=True)
             with Path.open(self.cache_file, "w") as f:
@@ -63,7 +82,11 @@ class UsageTracker:
             logger.warning("Failed to save usage stats", error=str(e))
 
     def _load_stats(self) -> None:
-        """Load statistics from disk."""
+        """Load statistics from disk.
+
+        Raises:
+            Exception: If loading fails (logged as warning)
+        """
         if not self.cache_file.exists():
             return
 

@@ -71,13 +71,21 @@ async def get_model_stats(
 
 @router.get("/cache/status", summary="Get model cache status")
 async def cache_status() -> dict:
-    """Get current model cache status including preload candidates."""
+    """Get current model cache status including preload candidates.
+
+    Returns:
+        Dictionary containing cache status, cached models, and usage statistics
+    """
     return get_cache_status()
 
 
-@router.delete("/cache/clear", summary="Clear model cache")
+@router.post("/cache/clear", summary="Clear model cache")
 async def clear_cache() -> Response:
-    """Clear all cached models from memory."""
+    """Clear all cached models from memory.
+
+    Returns:
+        HTTP Response with 204 No Content status and cache status header
+    """
     clear_model_cache()
     return Response(
         status_code=status.HTTP_204_NO_CONTENT, headers={"X-Cache-Status": "cleared"}

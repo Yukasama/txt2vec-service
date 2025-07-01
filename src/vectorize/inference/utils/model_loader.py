@@ -271,7 +271,14 @@ def _load_tokenizer(folder: Path, model_tag: str) -> AutoTokenizer | None:
 
 
 def _create_model_from_config(cfg: PretrainedConfig) -> torch.nn.Module:
-    """Create model instance from configuration."""
+    """Create model instance from configuration.
+
+    Args:
+        cfg: The model configuration object.
+
+    Returns:
+        The instantiated model instance.
+    """
     model_type = getattr(cfg, "model_type", None)
     architectures = getattr(cfg, "architectures", None)
 
@@ -282,7 +289,11 @@ def _create_model_from_config(cfg: PretrainedConfig) -> torch.nn.Module:
         logger.info("T5 model detected - using T5EncoderModel")
         return T5EncoderModel.from_config(cfg)  # type: ignore
 
-    if architectures and len(architectures) > 0 and "MaskedLM" in architectures[0]:
+    if (
+        architectures
+        and len(architectures) > 0
+        and architectures[0].endswith("ForMaskedLM")
+    ):
         logger.debug("  Architecture: {}", architectures[0])
         return AutoModelForMaskedLM.from_config(cfg)
 
