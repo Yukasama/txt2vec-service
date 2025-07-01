@@ -213,8 +213,9 @@ class Settings(BaseSettings):
         description="Base directory for storing uploaded model files.",
         exclude=True,
     )
+
     model_inference_limiter: int = Field(
-        default=Path(_model_config.get("inference_limiter")),
+        default=_model_config.get("inference_limiter"),
         description="Inference counter limiter in days.",
     )
 
