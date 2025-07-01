@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from loguru import logger
-from sqlmodel import func, or_, select
+from sqlmodel import and_, func, or_, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from vectorize.common.exceptions import VersionMismatchError
@@ -28,7 +28,7 @@ async def get_models_paged_db(
     page: int = 1,
     size: int = 5,
 ) -> tuple[Sequence[AIModel], int]:
-    """Fetches a sorted by recent inference (30 days) page of AIModel entries.
+    """Fetches a all ai models paged and sorted by recent inference (30 days).
 
     Args:
         db (AsyncSession): The database session.
@@ -49,25 +49,26 @@ async def get_models_paged_db(
     offset = (page - 1) * size
 
     statement = (
-        select(
-            AIModel,
-            func.count(InferenceCounter.id).label("inference_count"))  # type: ignore[reportArgumentType]
-        .join(
-            InferenceCounter,
-            onclause=AIModel.id == InferenceCounter.ai_model_id,  # type: ignore[reportArgumentType]
-            isouter=True
+            select(
+                AIModel,
+                func.count(InferenceCounter.id).label("inference_count")  # type: ignore[reportArgumentType]
+            )
+            .join(
+                InferenceCounter,
+                onclause=and_(  # type: ignore[reportArgumentType]
+                    AIModel.id == InferenceCounter.ai_model_id,
+                    or_(
+                        InferenceCounter.created_at.is_(None),  # type: ignore[reportArgumentType]
+                        InferenceCounter.created_at >= cutoff_date
+                    )
+                ),
+                isouter=True
+            )
+            .group_by(AIModel.id)  # type: ignore[reportArgumentType]
+            .order_by(func.count(InferenceCounter.id).desc())  # type: ignore[reportArgumentType]
+            .offset(offset)
+            .limit(size)
         )
-        .where(
-            or_(
-            InferenceCounter.created_at is None,
-            InferenceCounter.created_at >= cutoff_date
-        )
-        )
-        .group_by(AIModel.id)  # type: ignore[reportArgumentType]
-        .order_by(func.count(InferenceCounter.id).desc())  # type: ignore[reportArgumentType]
-        .offset(offset)
-        .limit(size)
-    )
 
     results = await db.exec(statement)
     models_with_counts = results.all()
@@ -79,14 +80,14 @@ async def get_models_paged_db(
         .select_from(AIModel)
         .join(
             InferenceCounter,
-            onclause=AIModel.id == InferenceCounter.ai_model_id,  # type: ignore[reportArgumentType]
+            onclause=and_(
+                AIModel.id == InferenceCounter.ai_model_id,
+                or_(
+                    InferenceCounter.created_at.is_(None),  # type: ignore[reportArgumentType]
+                    InferenceCounter.created_at >= cutoff_date
+                )
+            ),
             isouter=True
-        )
-        .where(
-            or_(
-                InferenceCounter.created_at.is_(None),  # type: ignore[reportArgumentType]
-                InferenceCounter.created_at >= cutoff_date
-            )
         )
     )
     total_count = await db.scalar(total_count_stmt) or 0  # type: ignore[reportArgumentType]

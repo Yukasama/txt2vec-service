@@ -67,7 +67,15 @@ async def get_model_count(
 async def get_inference_count_by_model_id(
     db: AsyncSession, ai_model_id: UUID
 ) -> int:
-    """Return total number of inferences for a specific AI model."""
+    """Return total number of inferences for a specific AI model.
+
+    Args:
+    db: Database session instance.
+    ai_model_id: The id of the AI model.
+
+    Returns:
+        list[InferenceCounter]: List of inference counter records for the model.
+    """
     model_check = await db.scalar(select(AIModel.id).where(AIModel.id == ai_model_id))
     if model_check is None:
         logger.debug("AI Model not found", model_id=ai_model_id)
