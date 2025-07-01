@@ -1,102 +1,116 @@
 @startuml entity-relation
 
-entity ai_model {
-  * id : CHAR(32)
-  * version : INTEGER
-  * name : VARCHAR
-  * model_tag : VARCHAR
-  * source : VARCHAR(11)
-  trained_from_id : CHAR(32)
-  created_at : DATETIME
-  updated_at : DATETIME
+enum TaskStatus {
+  queued
+  done
+  failed
+  running
+  canceled
 }
 
-entity upload_dataset_task {
-  * id : CHAR(32)
+enum Source {
+  github
+  huggingface
+  local
+}
+
+entity AIModel {
+  * ID : CHAR(32)
+  * Version : INTEGER
+  * Name : VARCHAR
+  * ModelTag : VARCHAR
+  * Source : VARCHAR(11)
+  TrainedFromID : CHAR(32)
+  CreatedAt : DATETIME
+  UpdatedAt : DATETIME
+}
+
+entity UploadDatasetTask {
+  * ID : CHAR(32)
   tag : VARCHAR(128)
-  task_status : VARCHAR(7)
-  end_date : DATETIME
-  error_msg : VARCHAR
-  created_at : DATETIME
-  updated_at : DATETIME
+  TaskStatus : VARCHAR(7)
+  EndDate : DATETIME
+  ErrorMsg : VARCHAR
+  CreatedAt : DATETIME
+  UpdatedAt : DATETIME
 }
 
-entity synthesis_task {
-  * id : CHAR(32)
-  task_status : VARCHAR(7)
-  end_date : DATETIME
-  error_msg : VARCHAR
-  created_at : DATETIME
-  updated_at : DATETIME
+entity SynthesisTask {
+  * ID : CHAR(32)
+  TaskStatus : VARCHAR(7)
+  EndDate : DATETIME
+  ErrorMsg : VARCHAR
+  CreatedAt : DATETIME
+  UpdatedAt : DATETIME
 }
 
-entity upload_task {
-  * id : CHAR(32)
-  tag : VARCHAR(128)
-  task_status : VARCHAR(7)
-  source : VARCHAR(11)
-  end_date : DATETIME
-  error_msg : VARCHAR
-  created_at : DATETIME
-  updated_at : DATETIME
+entity UploadTask {
+  * ID : CHAR(32)
+  Tag : VARCHAR(128)
+  TaskStatus : VARCHAR(7)
+  Source : VARCHAR(11)
+  EndDate : DATETIME
+  ErrorMsg : VARCHAR
+  CreatedAt : DATETIME
+  UpdatedAt : DATETIME
 }
 
-entity dataset {
-  * id : CHAR(32)
-  version : INTEGER
-  file_name : VARCHAR(255)
-  name : VARCHAR(128)
-  classification : VARCHAR(16)
-  rows : INTEGER
-  source : VARCHAR(11)
-  created_at : DATETIME
-  updated_at : DATETIME
-  synthesis_id : CHAR(32)
+entity Dataset {
+  * ID : CHAR(32)
+  Version : INTEGER
+  FileName : VARCHAR(255)
+  Name : VARCHAR(128)
+  Classification : VARCHAR(16)
+  Rows : INTEGER
+  Source : VARCHAR(11)
+  CreatedAt : DATETIME
+  UpdatedAt : DATETIME
+  SynthesisID : CHAR(32)
 }
 
-entity training_task {
-  * id : CHAR(32)
-  task_status : VARCHAR(7)
-  end_date : DATETIME
-  error_msg : VARCHAR
-  trained_model_id : CHAR(32)
-  created_at : DATETIME
-  updated_at : DATETIME
-  validation_dataset_path : VARCHAR
-  train_runtime : FLOAT
-  train_samples_per_second : FLOAT
-  train_steps_per_second : FLOAT
-  train_loss : FLOAT
-  epoch : FLOAT
+entity TrainingTask {
+  * ID : CHAR(32)
+  TaskStatus : VARCHAR(7)
+  EndDate : DATETIME
+  ErrorMsg : VARCHAR
+  TrainedModelID : CHAR(32)
+  CreatedAt : DATETIME
+  UpdatedAt : DATETIME
+  ValidationDatasetPath : VARCHAR
+  TrainRuntime : FLOAT
+  TrainSamplesPerSecond : FLOAT
+  TrainStepsPerSecond : FLOAT
+  TrainLoss : FLOAT
+  Epoch : FLOAT
 }
 
-entity evaluation_task {
-  * id : CHAR(32)
-  task_status : VARCHAR(7)
-  end_date : DATETIME
-  error_msg : VARCHAR
-  model_id : CHAR(32)
-  model_tag : VARCHAR
-  dataset_info : VARCHAR
-  baseline_model_tag : VARCHAR
-  created_at : DATETIME
-  updated_at : DATETIME
-  progress : FLOAT
-  evaluation_metrics : VARCHAR
-  baseline_metrics : VARCHAR
-  evaluation_summary : VARCHAR
+entity EvaluationTask {
+  * ID : CHAR(32)
+  TaskStatus : VARCHAR(7)
+  EndDate : DATETIME
+  ErrorMsg : VARCHAR
+  ModelID : CHAR(32)
+  ModelTag : VARCHAR
+  DatasetInfo : VARCHAR
+  BaselineModelTag : VARCHAR
+  CreatedAt : DATETIME
+  UpdatedAt : DATETIME
+  Progress : FLOAT
+  EvaluationMetrics : VARCHAR
+  BaselineMetrics : VARCHAR
+  EvaluationSummary : VARCHAR
 }
 
-entity inference_counter {
-  * id : CHAR(32)
-  ai_model_id : CHAR(32)
-  created_at : DATETIME
+entity InferenceCounter {
+  * ID : CHAR(32)
+  AIModelID : CHAR(32)
+  CreatedAt : DATETIME
 }
 
-ai_model::trained_from_id }o--|| ai_model::id : trained_from
-dataset::synthesis_id }o--|| synthesis_task::id : synthesis
-training_task::trained_model_id }o--|| ai_model::id : trained_model
-evaluation_task::model_id }o--|| ai_model::id : model
-inference_counter::ai_model_id }o--|| ai_model::id : ai_model
+AIModel::TrainedFromID }o--|| AIModel::id : TrainedFrom
+Dataset::SynthesisID }o--|| SynthesisTask::id : Synthesis
+TrainingTask::TrainedModelID }o--|| AIModel::id : TrainedModel
+EvaluationTask::ModelID }o--|| AIModel::id : Model
+InferenceCounter::AIModelID }o--|| AIModel::id : AIModel
 
 @enduml
