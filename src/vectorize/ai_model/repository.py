@@ -1,10 +1,11 @@
 """AIModel repository."""
 
 from collections.abc import Sequence
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from loguru import logger
-from sqlmodel import func, select
+from sqlmodel import func, or_, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from vectorize.common.exceptions import VersionMismatchError
@@ -47,30 +48,34 @@ async def get_models_paged_db(
 
     page = max(1, page)
     size = max(1, size)
-
+    cutoff_date = datetime.now(UTC) - timedelta(days=30)
     offset = (page - 1) * size
 
     statement = (
-        select(AIModel, func.count(InferenceCounter.id).label("inference_count"))  # type: ignore[reportArgumentType]
+        select(
+            AIModel,
+            func.count(InferenceCounter.id).label("inference_count"))  # type: ignore[reportArgumentType]
         .join(
             InferenceCounter,
             onclause=AIModel.id == InferenceCounter.ai_model_id,  # type: ignore[reportArgumentType]
             isouter=True
         )
+        .where(
+            or_(
+            InferenceCounter.created_at is None,
+            InferenceCounter.created_at >= cutoff_date
+        )
+        )
         .group_by(AIModel.id)  # type: ignore[reportArgumentType]
         .order_by(func.count(InferenceCounter.id).desc())  # type: ignore[reportArgumentType]
         .offset(offset)
         .limit(size)
-        # TODO add default limiter for time
     )
 
     results = await db.exec(statement)
     models_with_counts = results.all()
 
     models = [ai_model for ai_model, _ in models_with_counts]
-    for ai_model, inference_count in models_with_counts:
-        logger.info(f"Model: {ai_model.name}, Inference Count: {inference_count}")
-        # TODO reduce log to debug when done
 
     total_stmt = select(func.count()).select_from(AIModel)
     total_count_result = await db.exec(total_stmt)

@@ -279,125 +279,31 @@ async def seed_db(session: AsyncSession) -> None:
             model_tag="Evaluation Model"
         ),
     )
-    # NOSONAR
-    session.add(
-        InferenceCounter(
-            ai_model_id=AI_MODEL_LOCALTRAINMODEL_ID,
-            created_at=datetime.now(tz=UTC) - timedelta(minutes=30),
-        )
-    )
 
-    session.add(
-        InferenceCounter(
-            ai_model_id=AI_MODEL_READ_ID,
-            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
-        )
-    )
+    entries = [
+    (AI_MODEL_LOCALTRAINMODEL_ID, timedelta(minutes=30)),
+    (AI_MODEL_READ_ID, timedelta(minutes=30)),
+    (AI_MODEL_READ_ID, timedelta(minutes=30)),
+    (AI_MODEL_DELETE_ID, timedelta(minutes=30)),
+    (AI_MODEL_DELETE_ID, timedelta(minutes=30)),
+    (AI_MODEL_DELETE_ID, timedelta(minutes=30)),
+    (AI_MODEL_FAIL_ID, timedelta(minutes=30)),
+    (AI_MODEL_FAIL_ID, timedelta(minutes=30)),
+    (AI_MODEL_FAIL_ID, timedelta(minutes=30)),
+    (AI_MODEL_FAIL_ID, timedelta(minutes=30)),
+    (AI_MODEL_LOCALTRAINMODEL_ID, timedelta(minutes=30)),
+    (AI_MODEL_LOCALTRAINMODEL_ID, timedelta(minutes=30)),
+    (AI_MODEL_LOCALTRAINMODEL_ID, timedelta(minutes=30)),
+    (AI_MODEL_LOCALTRAINMODEL_ID, timedelta(minutes=30)),
+    (AI_MODEL_LOCALTRAINMODEL_ID, timedelta(minutes=30)),
+    (AI_MODEL_DELETE_ID, timedelta(days=30)),
+    (AI_MODEL_LOCALTRAINMODEL_ID, timedelta(days=30)),
+    ]
 
-    session.add(
-        InferenceCounter(
-            ai_model_id=AI_MODEL_READ_ID,
-            created_at=datetime.now(tz=UTC) - timedelta(minutes=32),
-        )
-    )
+    now = datetime.now(tz=UTC)
 
-    session.add(
-        InferenceCounter(
-            ai_model_id=AI_MODEL_DELETE_ID,
-            created_at=datetime.now(tz=UTC) - timedelta(minutes=33),
-        )
-    )
-
-    session.add(
-        InferenceCounter(
-            ai_model_id=AI_MODEL_DELETE_ID,
-            created_at=datetime.now(tz=UTC) - timedelta(minutes=34),
-        )
-    )
-
-    session.add(
-        InferenceCounter(
-            ai_model_id=AI_MODEL_DELETE_ID,
-            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
-        )
-    )
-
-    session.add(
-        InferenceCounter(
-            ai_model_id=AI_MODEL_FAIL_ID,
-            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
-        )
-    )
-
-    session.add(
-        InferenceCounter(
-            ai_model_id=AI_MODEL_FAIL_ID,
-            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
-        )
-    )
-
-    session.add(
-        InferenceCounter(
-            ai_model_id=AI_MODEL_FAIL_ID,
-            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
-        )
-    )
-
-    session.add(
-        InferenceCounter(
-            ai_model_id=AI_MODEL_FAIL_ID,
-            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
-        )
-    )
-
-    session.add(
-        InferenceCounter(
-            ai_model_id=AI_MODEL_LOCALTRAINMODEL_ID,
-            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
-        )
-    )
-
-    session.add(
-        InferenceCounter(
-            ai_model_id=AI_MODEL_LOCALTRAINMODEL_ID,
-            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
-        )
-    )
-
-    session.add(
-        InferenceCounter(
-            ai_model_id=AI_MODEL_LOCALTRAINMODEL_ID,
-            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
-        )
-    )
-
-    session.add(
-        InferenceCounter(
-            ai_model_id=AI_MODEL_LOCALTRAINMODEL_ID,
-            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
-        )
-    )
-
-    session.add(
-        InferenceCounter(
-            ai_model_id=AI_MODEL_LOCALTRAINMODEL_ID,
-            created_at=datetime.now(tz=UTC) - timedelta(minutes=31),
-        )
-    )
-
-    session.add(
-        InferenceCounter(
-            ai_model_id=AI_MODEL_DELETE_ID,
-            created_at=datetime.now(tz=UTC) - timedelta(days=30),
-        )
-    )
-
-    session.add(
-        InferenceCounter(
-            ai_model_id=AI_MODEL_LOCALTRAINMODEL_ID,
-            created_at=datetime.now(tz=UTC) - timedelta(days=30),
-        )
-    )
-
+    for model_id, delta in entries:
+        session.add(InferenceCounter(ai_model_id=model_id, created_at=now - delta))
     await session.commit()
+
     logger.info("Database seeded with initial data")
