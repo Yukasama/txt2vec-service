@@ -1,5 +1,6 @@
 """Router for synthetic data generation from media files."""
 
+import base64
 from typing import Annotated
 from uuid import UUID
 
@@ -9,12 +10,11 @@ from fastapi import (
     HTTPException,
     Query,
     Request,
-    UploadFile,
     status,
 )
 from loguru import logger
 from sqlmodel.ext.asyncio.session import AsyncSession
-from starlette.datastructures import FormData
+from starlette.datastructures import FormData, UploadFile
 
 from vectorize.config.db import get_session
 from vectorize.dataset.repository import get_dataset_db
@@ -114,7 +114,12 @@ def _process_file_contents(
     request: Request, task: SynthesisTask, file_contents: list[tuple[str, bytes]]
 ) -> dict[str, str | UUID | int]:
     """Process synthesis task using file contents."""
-    process_file_contents_background_bg.send(str(task.id), file_contents)
+    serializable_contents = [
+        (filename, base64.b64encode(content).decode("utf-8"))
+        for filename, content in file_contents
+    ]
+
+    process_file_contents_background_bg.send(str(task.id), serializable_contents)
 
     logger.info(
         "Synthesis task created, starting background processing.",

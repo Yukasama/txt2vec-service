@@ -1,5 +1,6 @@
 """Background tasks for synthesis processing."""
 
+import base64
 import tempfile
 from pathlib import Path
 from uuid import UUID, uuid4
@@ -33,14 +34,14 @@ __all__ = [
 @dramatiq.actor(max_retries=3)
 async def process_file_contents_background_bg(
     task_id: str,
-    file_contents: list[tuple[str, bytes]],
+    file_contents: list[tuple[str, str]],
     options_dict: dict | None = None,
 ) -> None:
     """Process file contents extracted from uploaded files.
 
     Args:
         task_id: ID of the synthesis task
-        file_contents: List of tuples containing (filename, file_content)
+        file_contents: List of tuples containing (filename, base64_encoded_content)
         options_dict: Optional dataset upload options
     """
     async with AsyncSession(engine, expire_on_commit=False) as db:
@@ -48,15 +49,19 @@ async def process_file_contents_background_bg(
         options = DatasetUploadOptions(**options_dict) if options_dict else None
 
         try:
+            decoded_contents = [
+                (filename, base64.b64decode(base64_content))
+                for filename, base64_content in file_contents
+            ]
             logger.info(
                 "Starting processing of file contents",
                 taskId=task_uuid,
-                fileCount=len(file_contents),
+                fileCount=len(decoded_contents),
             )
 
             dataset_ids = []
 
-            for filename, content in file_contents:
+            for filename, content in decoded_contents:
                 try:
                     dataset_id = await _process_single_file(
                         db, task_uuid, filename, content, options
@@ -127,7 +132,7 @@ async def _create_synthetic_dataset_from_existing(
     Returns:
         ID of created synthetic dataset
     """
-    unique_name = f"{source_dataset.name}_{uuid4()}.csv"
+    unique_name = f"{source_dataset.name}_{uuid4()}.jsonl"
     _save_dataframe_to_fs(df, unique_name)
 
     new_dataset = Dataset(
@@ -286,7 +291,7 @@ async def _create_synthetic_dataset(
         ID of created dataset
     """
     file_path = Path(filename)
-    unique_name = f"{file_path.stem}_{uuid4()}.csv"
+    unique_name = f"{file_path.stem}_{uuid4()}.jsonl"
 
     _save_dataframe_to_fs(df, unique_name)
 
