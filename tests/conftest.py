@@ -104,7 +104,7 @@ async def session() -> AsyncGenerator[AsyncSession]:
         poolclass=StaticPool,
         connect_args={
             "check_same_thread": False,
-            "timeout": 30,
+            "timeout": 60,
             "isolation_level": None,
         },
         echo=False,
