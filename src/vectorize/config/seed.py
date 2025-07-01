@@ -42,6 +42,12 @@ DATASET_TRAINING_2_ID = UUID("0b30b284-f7fe-4e6c-a270-17cafc5b5bcb")
 UPLOAD_TASK_GH_ID = UUID("d2f3e4b8-8c7f-4d2a-9f1e-0a6f3e4d2a5b")
 UPLOAD_TASK_HF_ID = UUID("d2f3e4b8-8c7f-4d2a-9f1e-0a6f3e4d2a5c")
 
+PAGED_MODEL_ID_ONE = UUID("d2f3e4b8-8c7f-4d2a-9f1e-0a6f3e4d2a5d")
+PAGED_MODEL_ID_TWO = UUID("d2f3e4b8-8c7f-4d2a-9f1e-0a6f3e4d2a5e")
+PAGED_MODEL_ID_THREE = UUID("d2f3e4b8-8c7f-4d2a-9f1e-0a6f3e4d2a5f")
+PAGED_MODEL_ID_FOUR = UUID("d2f3e4b8-8c7f-4d2a-9f1e-0a6f3e4d2a5g")
+PAGED_MODEL_ID_FIVE = UUID("d2f3e4b8-8c7f-4d2a-9f1e-0a6f3e4d2a5h")
+
 
 async def seed_db(session: AsyncSession) -> None:
     """Seed the database with initial test data.
@@ -173,6 +179,7 @@ async def seed_db(session: AsyncSession) -> None:
     )
     session.add(
         AIModel(
+            id=PAGED_MODEL_ID_ONE,
             name="Any Paged Model 01",
             source=ModelSource.LOCAL,
             model_tag="any_model_01",
@@ -180,6 +187,7 @@ async def seed_db(session: AsyncSession) -> None:
     )
     session.add(
         AIModel(
+            id=PAGED_MODEL_ID_TWO,
             name="Any Paged Model 02",
             source=ModelSource.LOCAL,
             model_tag="any_model_02",
@@ -187,6 +195,7 @@ async def seed_db(session: AsyncSession) -> None:
     )
     session.add(
         AIModel(
+            id=PAGED_MODEL_ID_THREE,
             name="Any Paged Model 03",
             source=ModelSource.LOCAL,
             model_tag="any_model_03",
@@ -194,6 +203,7 @@ async def seed_db(session: AsyncSession) -> None:
     )
     session.add(
         AIModel(
+            id=PAGED_MODEL_ID_FOUR,
             name="Any Paged Model 04",
             source=ModelSource.LOCAL,
             model_tag="any_model_04",
@@ -201,6 +211,7 @@ async def seed_db(session: AsyncSession) -> None:
     )
     session.add(
         AIModel(
+            id=PAGED_MODEL_ID_FIVE,
             name="Any Paged Model 05",
             source=ModelSource.LOCAL,
             model_tag="any_model_05",
@@ -282,6 +293,7 @@ async def seed_db(session: AsyncSession) -> None:
 
     entries = [
     (AI_MODEL_LOCALTRAINMODEL_ID, timedelta(minutes=30)),
+    (AI_MODEL_MINILM_ID, timedelta(minutes=30))
     (AI_MODEL_READ_ID, timedelta(minutes=30)),
     (AI_MODEL_READ_ID, timedelta(minutes=30)),
     (AI_MODEL_DELETE_ID, timedelta(minutes=30)),

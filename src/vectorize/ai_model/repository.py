@@ -77,9 +77,23 @@ async def get_models_paged_db(
 
     models = [ai_model for ai_model, _ in models_with_counts]
 
-    total_stmt = select(func.count()).select_from(AIModel)
-    total_count_result = await db.exec(total_stmt)
-    total_count = total_count_result.one()
+    total_count_stmt = (
+        select(func.count(func.distinct(AIModel.id)))
+        .select_from(AIModel)
+        .join(
+            InferenceCounter,
+            onclause=AIModel.id == InferenceCounter.ai_model_id,  # type: ignore[reportArgumentType]
+            isouter=True
+        )
+        .where(
+            or_(
+                InferenceCounter.created_at.is_(None),  # type: ignore[reportArgumentType]
+                InferenceCounter.created_at >= cutoff_date
+            )
+        )
+    )
+    total_count_result = await db.exec(total_count_stmt)
+    total_count = total_count_result.scalar_one()  # type: ignore[reportArgumentType]
 
     if total_count == 0:
         raise ModelNotFoundError()
