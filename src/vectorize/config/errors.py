@@ -24,11 +24,7 @@ class ErrorCode(StrEnum):
     HUGGINGFACE_DATASET_FORMAT_ERROR = "HUGGINGFACE_DATASET_FORMAT_ERROR"
     DATASET_ALREADY_EXISTS = "HUGGINGFACE_DATASET_ALREADY_EXISTS"
 
-    # Training errors
-    INVALID_EPOCHS = "INVALID_EPOCHS"
-    INVALID_BATCH_SIZE = "INVALID_BATCH_SIZE"
-    INVALID_LEARNING_RATE = "INVALID_LEARNING_RATE"
-
+    # Upload errors
     INVALID_URL = "INVALID_URL"
 
 
@@ -38,7 +34,6 @@ class ErrorNames(StrEnum):
     INTERNAL_SERVER_ERROR = "Internal server error"
 
     # File validation errors
-    FILE_MISSING_ERROR = "No file provided"
     FILENAME_MISSING_ERROR = "File has no filename"
     FILENAME_TOO_LONG_ERROR = "Filename is too long"
 

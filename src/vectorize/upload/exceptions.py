@@ -35,14 +35,6 @@ class ModelTooLargeError(AppError):
         super().__init__(f"Model file is too large: {formatted_size}")
 
 
-class UnsupportedModelFormatError(AppError):
-    """Exception raised when the model file format is not supported."""
-
-    error_code = ErrorCode.UNSUPPORTED_FORMAT
-    message = "This model format is not supported. Supported formats: .pt, .pth, .bin"
-    status_code = status.HTTP_400_BAD_REQUEST
-
-
 class InvalidZipError(AppError):
     """Exception raised when a ZIP file is corrupted or invalid."""
 
@@ -57,14 +49,6 @@ class NoValidModelsFoundError(AppError):
     error_code = ErrorCode.INVALID_FILE
     message = "No valid PyTorch model files found"
     status_code = status.HTTP_400_BAD_REQUEST
-
-
-class ServiceUnavailableError(AppError):
-    """Exception raised when the service is unavailable."""
-
-    error_code = ErrorCode.SERVICE_UNAVAILABLE
-    message = "Service is temporarily unavailable"
-    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
 
 
 class ModelAlreadyExistsError(AppError):
@@ -88,6 +72,7 @@ class InvalidUrlError(AppError):
 
 class ModelNotFoundError(AppError):
     """Exception raised when no model is found."""
+
     error_code = ErrorCode.NOT_FOUND
     message = "Model not found"
     status_code = status.HTTP_404_NOT_FOUND

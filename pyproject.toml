@@ -102,6 +102,7 @@ dev = [
     "mkdocs-material>=9.6.14",
     "mkdocstrings[python]>=0.29.1",
     "testcontainers[redis]>=4.10.0",
+    "vulture>=2.14",
 ]
 
 [tool.hatch.build.targets.sdist]

@@ -1,8 +1,10 @@
 """Process Hugging Face dataset splits and subsets."""
 
+import asyncio
 import os
 import tempfile
 from collections.abc import Iterable, Iterator, Mapping
+from concurrent.futures import ThreadPoolExecutor
 from itertools import chain
 from pathlib import Path
 from typing import Any, cast
@@ -10,7 +12,7 @@ from uuid import UUID
 
 import orjson
 from datasets import Dataset as HFDataset
-from datasets import load_dataset
+from datasets import DatasetDict, IterableDataset, IterableDatasetDict, load_dataset
 from datasets.info import DatasetInfo
 from loguru import logger
 from sqlalchemy.exc import SQLAlchemyError
@@ -99,9 +101,11 @@ async def _process_single_dataset(
     Raises:
         Exception: If dataset loading, file writing, or database operations fail.
     """
-    file_path = None
 
-    try:
+    def _blocking_dataset_work() -> tuple[
+        DatasetDict | HFDataset | IterableDatasetDict | IterableDataset, str, Path, int
+    ]:
+        """All the blocking operations in one function."""
         ds = load_dataset(dataset_tag, name=subset, split=split, streaming=False)
         logger.debug(
             "Loaded HF dataset", dataset_tag=dataset_tag, split=split, subset=subset
@@ -116,6 +120,20 @@ async def _process_single_dataset(
         file_name = f"{'_'.join(parts)}.jsonl"
         file_path = settings.dataset_upload_dir / file_name
         rows = _write_jsonl(ds, file_path)
+
+        return ds, file_name, file_path, rows
+
+    file_path = None
+    try:
+        loop = asyncio.get_event_loop()
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            _, file_name, file_path, rows = await loop.run_in_executor(
+                executor, _blocking_dataset_work
+            )
+
+        logger.debug(
+            "Loaded HF dataset", dataset_tag=dataset_tag, split=split, subset=subset
+        )
 
         dataset_name = dataset_tag
         if split:
@@ -137,7 +155,8 @@ async def _process_single_dataset(
 
     except SQLAlchemyError:
         if file_path and file_path.exists():
-            file_path.unlink()
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, file_path.unlink)
             logger.debug("Cleaned up file after database error", file_path=file_path)
         raise
 
