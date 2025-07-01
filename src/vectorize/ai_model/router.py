@@ -33,7 +33,7 @@ async def get_ai_models(
     page: Annotated[int, Query(ge=1, description="Page number, starts at 1")] = 1,
     size: Annotated[int, Query(ge=5, le=100, description="Items per page")] = 5,
 ) -> PagedResponse:
-    """Returns a paged response of AI models.
+    """Returns a paged response of AI models sorted by recent inference (30 days).
 
     Args:
         page (int, optional): The page number. Defaults to 1.

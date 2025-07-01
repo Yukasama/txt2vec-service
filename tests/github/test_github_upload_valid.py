@@ -1,5 +1,5 @@
 # ruff: noqa: S101
-"""Github endpoint invalid input checks."""
+"""Github endpoint valid input checks."""
 
 import pytest
 from fastapi import status
@@ -12,8 +12,8 @@ _BRANCH_DIFF = "DifferentBranch-Full"
 
 
 @pytest.mark.github
-def test_load_bogus_model_tag_and_conflict_on_empty_tag(client: TestClient) -> None:
-    """Tests that uploading the same model with and without tag causes conflict."""
+def test_load_bogus_model_tag(client: TestClient) -> None:
+    """Tests the main branch upload."""
     payload_main = {
         "owner": _REPO_OWNER,
         "repo_name": _REPO_NAME,
@@ -23,26 +23,37 @@ def test_load_bogus_model_tag_and_conflict_on_empty_tag(client: TestClient) -> N
     response_main = client.post("uploads/github", json=payload_main)
     assert response_main.status_code == status.HTTP_201_CREATED
 
-    payload_empty = {
-        "owner": _REPO_OWNER,
-        "repo_name": _REPO_NAME,
-        "tag": ""
-    }
-    response_empty = client.post("uploads/github", json=payload_empty)
-    assert response_empty.status_code == status.HTTP_409_CONFLICT
-
 
 @pytest.mark.github
 def test_load_bogus_model_branch_tag(client: TestClient) -> None:
-    """Tests default main branch.
-
-    Args:
-        client (TestClient): _description_
-    """
+    """Tests different branch upload."""
     payload = {
         "owner": _REPO_OWNER,
         "repo_name": _REPO_NAME,
         "tag": _BRANCH_DIFF
     }
     response = client.post("uploads/github", json=payload)
+    assert response.status_code == status.HTTP_201_CREATED
+
+
+@pytest.mark.github
+def test_load_bogus_model_without_tag(client: TestClient) -> None:
+    """Tests that a model can be uploaded without specifying a tag."""
+    payload = {
+        "owner": _REPO_OWNER,
+        "repo_name": _REPO_NAME
+    }
+    response = client.post("/uploads/github", json=payload)
+    assert response.status_code == status.HTTP_201_CREATED
+
+
+@pytest.mark.github
+def test_load_bogus_model_empty_tag(client: TestClient) -> None:
+    """Tests that an empty tag string is treated like 'main'."""
+    payload = {
+        "owner": _REPO_OWNER,
+        "repo_name": _REPO_NAME,
+        "tag": ""
+    }
+    response = client.post("/uploads/github", json=payload)
     assert response.status_code == status.HTTP_201_CREATED

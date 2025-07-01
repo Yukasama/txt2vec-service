@@ -1,21 +1,37 @@
 @startuml use-cases-uploads
 left to right direction
-actor Nutzer
+skinparam actorStyle awesome
 
-package "Modelle hochladen" {
-    usecase "Hugging Face Modell anhand Tag laden" as HFModellLaden
-    usecase "Lokale Dateien hochladen" as LokaleDateien
-    usecase "GitHub Repo anhand URL laden" as GitHubRepoLaden
+actor User
+
+package "Model Upload Service" {
+    usecase Github as "Upload GitHub Model"
+    usecase HF as "Upload HuggingFace Model"
+    usecase Zip as "Upload ZIP Archive"
+
+    usecase CreateTask as "Create Upload Task"
+    usecase BGProcess as "Background Process Upload"
+    usecase SaveDB as "Save Model to DB"
+    usecase ValidateFiles as "Validate Model Files"
+    usecase CacheModel as "Cache Model Locally"
 }
 
-package "Modelle verwalten" {
-    usecase "Modell umbenennen" as ModellUmbenennen
-    usecase "Modell löschen" as ModellLöschen
-}
+User --> Github : Request upload\n(owner, repo, branch)
+User --> HF : Request upload\n(modeltag, revision)
+User --> Zip : Upload ZIP file\n(optional base name)
 
-Nutzer --> HFModellLaden
-Nutzer --> LokaleDateien
-Nutzer --> GitHubRepoLaden
-Nutzer --> ModellUmbenennen
-Nutzer --> ModellLöschen
+Github --> CreateTask
+HF --> CreateTask
+Zip --> CreateTask
+
+CreateTask --> BGProcess
+
+BGProcess --> ValidateFiles
+BGProcess --> CacheModel
+BGProcess --> SaveDB
+
+ValidateFiles --> BGProcess : sucess or fail
+CacheModel --> BGProcess : sucess or fail
+SaveDB --> BGProcess : sucess or fail
+
 @enduml

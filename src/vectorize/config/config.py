@@ -214,6 +214,11 @@ class Settings(BaseSettings):
         exclude=True,
     )
 
+    model_inference_limiter: int = Field(
+        default=_model_config.get("inference_limiter"),
+        description="Inference counter limiter in days.",
+    )
+
     model_max_upload_size: int = Field(
         default=_model_config.get("max_upload_size"),
         description="Maximum allowed size for model uploads in bytes.",

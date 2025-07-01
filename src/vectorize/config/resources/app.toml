@@ -82,6 +82,7 @@ hf_cache_time = 3600
 [app.model]
 upload_dir = "data/models"
 max_upload_size = 53687091200 # 50 GB
+inference_limiter = 30
 
 [app.inference]
 device = "cpu"

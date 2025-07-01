@@ -15,6 +15,7 @@ from vectorize.dataset.dataset_source import DatasetSource
 from vectorize.dataset.models import Dataset
 from vectorize.dataset.task_model import UploadDatasetTask
 from vectorize.evaluation.models import EvaluationTask
+from vectorize.inference.models import InferenceCounter
 from vectorize.task.task_status import TaskStatus
 from vectorize.training.models import TrainingTask
 from vectorize.upload.models import UploadTask
@@ -40,6 +41,12 @@ DATASET_TRAINING_2_ID = UUID("0b30b284-f7fe-4e6c-a270-17cafc5b5bcb")
 
 UPLOAD_TASK_GH_ID = UUID("d2f3e4b8-8c7f-4d2a-9f1e-0a6f3e4d2a5b")
 UPLOAD_TASK_HF_ID = UUID("d2f3e4b8-8c7f-4d2a-9f1e-0a6f3e4d2a5c")
+
+PAGED_MODEL_ID_ONE = UUID("d2f3e4b8-8c7f-4d2a-9f1e-0a6f3e4d2a5d")
+PAGED_MODEL_ID_TWO = UUID("d2f3e4b8-8c7f-4d2a-9f1e-0a6f3e4d2a5e")
+PAGED_MODEL_ID_THREE = UUID("d2f3e4b8-8c7f-4d2a-9f1e-0a6f3e4d2a5f")
+PAGED_MODEL_ID_FOUR = UUID("d2f3e4b8-8c7f-4d2a-9f1e-0a6f3e4d2a50")
+PAGED_MODEL_ID_FIVE = UUID("d2f3e4b8-8c7f-4d2a-9f1e-0a6f3e4d2a51")
 
 
 async def seed_db(session: AsyncSession) -> None:
@@ -172,6 +179,7 @@ async def seed_db(session: AsyncSession) -> None:
     )
     session.add(
         AIModel(
+            id=PAGED_MODEL_ID_ONE,
             name="Any Paged Model 01",
             source=ModelSource.LOCAL,
             model_tag="any_model_01",
@@ -179,6 +187,7 @@ async def seed_db(session: AsyncSession) -> None:
     )
     session.add(
         AIModel(
+            id=PAGED_MODEL_ID_TWO,
             name="Any Paged Model 02",
             source=ModelSource.LOCAL,
             model_tag="any_model_02",
@@ -186,6 +195,7 @@ async def seed_db(session: AsyncSession) -> None:
     )
     session.add(
         AIModel(
+            id=PAGED_MODEL_ID_THREE,
             name="Any Paged Model 03",
             source=ModelSource.LOCAL,
             model_tag="any_model_03",
@@ -193,6 +203,7 @@ async def seed_db(session: AsyncSession) -> None:
     )
     session.add(
         AIModel(
+            id=PAGED_MODEL_ID_FOUR,
             name="Any Paged Model 04",
             source=ModelSource.LOCAL,
             model_tag="any_model_04",
@@ -200,6 +211,7 @@ async def seed_db(session: AsyncSession) -> None:
     )
     session.add(
         AIModel(
+            id=PAGED_MODEL_ID_FIVE,
             name="Any Paged Model 05",
             source=ModelSource.LOCAL,
             model_tag="any_model_05",
@@ -278,5 +290,38 @@ async def seed_db(session: AsyncSession) -> None:
             model_tag="Evaluation Model"
         ),
     )
+
+    entries = [
+        (AI_MODEL_LOCALTRAINMODEL_ID, timedelta(minutes=30)),
+        (AI_MODEL_MINILM_ID, timedelta(minutes=30)),
+        (AI_MODEL_READ_ID, timedelta(minutes=30)),
+        (AI_MODEL_READ_ID, timedelta(minutes=30)),
+        (AI_MODEL_DELETE_ID, timedelta(minutes=30)),
+        (AI_MODEL_DELETE_ID, timedelta(minutes=30)),
+        (AI_MODEL_DELETE_ID, timedelta(minutes=30)),
+        (AI_MODEL_FAIL_ID, timedelta(minutes=30)),
+        (AI_MODEL_FAIL_ID, timedelta(minutes=30)),
+        (AI_MODEL_FAIL_ID, timedelta(minutes=30)),
+        (AI_MODEL_FAIL_ID, timedelta(minutes=30)),
+        (AI_MODEL_LOCALTRAINMODEL_ID, timedelta(minutes=30)),
+        (AI_MODEL_LOCALTRAINMODEL_ID, timedelta(minutes=30)),
+        (AI_MODEL_LOCALTRAINMODEL_ID, timedelta(minutes=30)),
+        (AI_MODEL_LOCALTRAINMODEL_ID, timedelta(minutes=30)),
+        (AI_MODEL_LOCALTRAINMODEL_ID, timedelta(minutes=30)),
+        (PAGED_MODEL_ID_ONE, timedelta(minutes=30)),
+        (PAGED_MODEL_ID_TWO, timedelta(minutes=30)),
+        (PAGED_MODEL_ID_THREE, timedelta(minutes=30)),
+        (PAGED_MODEL_ID_FOUR, timedelta(minutes=30)),
+        (PAGED_MODEL_ID_FIVE, timedelta(minutes=30)),
+        (AI_MODEL_DELETE_ID, timedelta(days=30)),
+        (AI_MODEL_LOCALTRAINMODEL_ID, timedelta(days=30)),
+    ]
+
+    for model_id, delta in entries:
+        session.add(InferenceCounter(
+            ai_model_id=model_id,
+            created_at=datetime.now(tz=UTC) - delta)
+        )
     await session.commit()
+
     logger.info("Database seeded with initial data")

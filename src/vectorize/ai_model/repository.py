@@ -1,16 +1,19 @@
 """AIModel repository."""
 
 from collections.abc import Sequence
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from loguru import logger
-from sqlmodel import func, select
+from sqlmodel import and_, func, or_, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from vectorize.common.exceptions import VersionMismatchError
+from vectorize.config import settings
 
-from .exceptions import ModelNotFoundError, NoModelFoundError
+from .exceptions import ModelNotFoundError
 from .models import AIModel, AIModelUpdate
+from .utils.model_deletion import remove_model_from_memory
 
 __all__ = [
     "delete_model_db",
@@ -26,7 +29,7 @@ async def get_models_paged_db(
     page: int = 1,
     size: int = 5,
 ) -> tuple[Sequence[AIModel], int]:
-    """Fetches a page of AIModel entries from the database.
+    """Fetches a all ai models paged and sorted by recent inference (30 days).
 
     Args:
         db (AsyncSession): The database session.
@@ -34,26 +37,66 @@ async def get_models_paged_db(
         size (int, optional): Number of items per page. Defaults to 5.
 
     Returns:
-        tuple[list[AIModel], int]: A tuple containing the list of AIModel
-        objects for the requested page,
-        and the total number of models in the database.
+        Tuple[Sequence[AIModel], int]: A tuple containing the list of AIModel
+        objects for the requested page and the total number of models in the database.
 
     Raises:
         NoModelFoundError: If there are no models in the database.
     """
-    total_stmt = select(func.count()).select_from(AIModel)
-    total = await db.scalar(total_stmt)
-
-    if not total:
-        raise NoModelFoundError()
-
+    from vectorize.inference.models import InferenceCounter  # noqa: PLC0415
+    page = max(1, page)
+    size = max(1, size)
+    cutoff_date = datetime.now(UTC) - timedelta(days=settings.model_inference_limiter)
     offset = (page - 1) * size
-    stmt = select(AIModel).offset(offset).limit(size)
-    result = await db.exec(stmt)
-    items = result.all()
 
-    logger.debug("AIModels retrieved", items_fetched=len(items), total_items=total)
-    return items, total
+    statement = (
+            select(
+                AIModel,
+                func.count(InferenceCounter.id).label("inference_count")  # type: ignore[reportArgumentType]
+            )
+            .join(
+                InferenceCounter,
+                onclause=and_(  # type: ignore[reportArgumentType]
+                    AIModel.id == InferenceCounter.ai_model_id,
+                    or_(
+                        InferenceCounter.created_at.is_(None),  # type: ignore[reportArgumentType]
+                        InferenceCounter.created_at >= cutoff_date
+                    )
+                ),
+                isouter=True
+            )
+            .group_by(AIModel.id)  # type: ignore[reportArgumentType]
+            .order_by(func.count(InferenceCounter.id).desc())  # type: ignore[reportArgumentType]
+            .offset(offset)
+            .limit(size)
+        )
+
+    results = await db.exec(statement)
+    models_with_counts = results.all()
+
+    models = [ai_model for ai_model, _ in models_with_counts]
+
+    total_count_stmt = (
+        select(func.count(func.distinct(AIModel.id)))
+        .select_from(AIModel)
+        .join(
+            InferenceCounter,
+            onclause=and_(
+                AIModel.id == InferenceCounter.ai_model_id,
+                or_(
+                    InferenceCounter.created_at.is_(None),  # type: ignore[reportArgumentType]
+                    InferenceCounter.created_at >= cutoff_date
+                )
+            ),
+            isouter=True
+        )
+    )
+    total_count = await db.scalar(total_count_stmt) or 0  # type: ignore[reportArgumentType]
+
+    if total_count == 0:
+        raise ModelNotFoundError()
+
+    return models, total_count
 
 
 async def get_ai_model_db(db: AsyncSession, model_tag: str) -> AIModel:
@@ -156,3 +199,4 @@ async def delete_model_db(db: AsyncSession, model_id: UUID) -> None:
     await db.delete(model)
     await db.commit()
     logger.debug("Model deleted", model=model)
+    await remove_model_from_memory(model.model_tag)

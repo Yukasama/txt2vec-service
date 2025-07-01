@@ -1,21 +1,22 @@
 @startuml use-cases-training
 left to right direction
-actor Nutzer
+skinparam actorStyle awesome
+actor User
 
-package "SBERT Modell trainieren" {
-    usecase "Training starten" as TrainingStarten
-    usecase "Training-Status abfragen" as StatusAbfragen
-    usecase "Training-Parameter konfigurieren" as ParameterKonfigurieren
+package "SBERT Model Training" {
+    usecase TrainingStart as "Start Training"
+    usecase CheckStatus as "Check Training Status"
+    usecase ConfigureParameters as "Configure Training Parameters"
 }
 
-package "Training-Daten verwalten" {
-    usecase "Triplet-Datensätze auswählen" as DatasetsAuswählen
-    usecase "Validierungs-Dataset festlegen" as ValidationFestlegen
+package "Manage Training Data" {
+    usecase SelectDatasets as "Select Triplet Datasets"
+    usecase SetValidationDataset as "Set Validation Dataset"
 }
 
-Nutzer --> TrainingStarten
-Nutzer --> StatusAbfragen
-Nutzer --> ParameterKonfigurieren
-Nutzer --> DatasetsAuswählen
-Nutzer --> ValidationFestlegen
+User --> TrainingStart
+User --> CheckStatus
+User --> ConfigureParameters
+User --> SelectDatasets
+User --> SetValidationDataset
 @enduml

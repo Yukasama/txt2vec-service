@@ -1,8 +1,8 @@
 @startuml api-endpoints
+skinparam actorStyle awesome
 actor User
 
 rectangle "Backend (FastAPI)" {
-  ' --- MODEL ENDPOINTS ---
   package "Model Endpoints (/api/models/...)" {
     [GET /models/embeddings]
     [GET /models]
@@ -16,55 +16,52 @@ rectangle "Backend (FastAPI)" {
     [GET /models/evaluate/status/{id}]
   }
 
-  ' --- DATASET ENDPOINTS ---
   package "Dataset Endpoints (/api/datasets/...)" {
     [GET /datasets]
     [POST /datasets/upload]
     [POST /datasets/generate]
   }
   
-  ' --- INTERNAL PROCESSES ---
+  package "Task Endpoints (/api/tasks/...)" {
+    [GET /tasks]
+    [GET /tasks/{id}]
+  }
+
   package "Internal Processes" {
     [GitHub Pull / Hugging Face Pull]
-    [Save model to file system (~vectorize/models)]
-    [Create database entry for model]
+    [Save Model to Filesystem (/app/data/models)]
+    [Create Database Entry for Model]
     
-    [Start asynchronous training]
-    [Start asynchronous evaluation]
-    [Generate synthetic data using script]
-    [Convert dataset if necessary and save to database]
+    [Start Asynchronous Training]
+    [Start Asynchronous Evaluation]
+    [Generate Synthetic Data]
+    [Convert and Save Dataset to DB]
     
-    [Run scripts (Training/Evaluation)]
-    [Update status in database]
-    [Increase model request count]
+    [Run Training/Evaluation Scripts]
+    [Update Task Status in Database]
+    [Increase Model Request Count]
   }
 }
 
-' Upload processes (models)
 [POST /models/upload] --> [GitHub Pull / Hugging Face Pull]
 [POST /models/batch-upload] --> [GitHub Pull / Hugging Face Pull]
-[GitHub Pull / Hugging Face Pull] --> [Save model to file system (~vectorize/models)]
-[GitHub Pull / Hugging Face Pull] --> [Create database entry for model]
+[GitHub Pull / Hugging Face Pull] --> [Save Model to Filesystem (/app/data/models)]
+[GitHub Pull / Hugging Face Pull] --> [Create Database Entry for Model]
 
-' Dataset processes
-[POST /datasets/generate] --> [Generate synthetic data using script]
-[Generate synthetic data using script] --> [Convert dataset if necessary and save to database]
-[POST /datasets/upload] --> [Convert dataset if necessary and save to database]
+[POST /datasets/generate] --> [Generate Synthetic Data]
+[Generate Synthetic Data] --> [Convert and Save Dataset to DB]
+[POST /datasets/upload] --> [Convert and Save Dataset to DB]
 
-' Training processes
-[POST /models/train] --> [Start asynchronous training]
-[Start asynchronous training] --> [Run scripts (Training/Evaluation)]
-[Start asynchronous training] --> [Update status in database]
+[POST /models/train] --> [Start Asynchronous Training]
+[Start Asynchronous Training] --> [Run Training/Evaluation Scripts]
+[Start Asynchronous Training] --> [Update Task Status in Database]
 
-' Evaluation processes
-[POST /models/evaluate] --> [Start asynchronous evaluation]
-[Start asynchronous evaluation] --> [Run scripts (Training/Evaluation)]
-[Start asynchronous evaluation] --> [Update status in database]
+[POST /models/evaluate] --> [Start Asynchronous Evaluation]
+[Start Asynchronous Evaluation] --> [Run Training/Evaluation Scripts]
+[Start Asynchronous Evaluation] --> [Update Task Status in Database]
 
-' Model usage tracking
-[GET /models/embeddings] --> [Increase model request count]
+[GET /models/embeddings] --> [Increase Model Request Count]
 
-' User API flows
 User --> [GET /models/embeddings]
 User --> [GET /models]
 User --> [POST /models/upload]
@@ -76,4 +73,6 @@ User --> [GET /models/evaluate/status/{id}]
 User --> [GET /datasets]
 User --> [POST /datasets/upload]
 User --> [POST /datasets/generate]
+User --> [GET /tasks]
+User --> [GET /tasks/{id}]
 @enduml
