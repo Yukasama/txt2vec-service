@@ -4,7 +4,6 @@ import asyncio
 import os
 import tempfile
 from collections.abc import Iterable, Iterator, Mapping
-from concurrent.futures import ThreadPoolExecutor
 from itertools import chain
 from pathlib import Path
 from typing import Any, cast
@@ -107,11 +106,8 @@ async def _process_single_dataset(
     ]:
         """All the blocking operations in one function."""
         ds = load_dataset(dataset_tag, name=subset, split=split, streaming=False)
-        logger.debug(
-            "Loaded HF dataset", dataset_tag=dataset_tag, split=split, subset=subset
-        )
-
         parts = [dataset_tag.replace("/", "_")]
+
         if split:
             parts.append(split)
         if subset and subset != "default":
@@ -125,11 +121,10 @@ async def _process_single_dataset(
 
     file_path = None
     try:
-        loop = asyncio.get_event_loop()
-        with ThreadPoolExecutor(max_workers=1) as executor:
-            _, file_name, file_path, rows = await loop.run_in_executor(
-                executor, _blocking_dataset_work
-            )
+        loop = asyncio.get_running_loop()
+        _, file_name, file_path, rows = await loop.run_in_executor(
+            None, _blocking_dataset_work
+        )
 
         logger.debug(
             "Loaded HF dataset", dataset_tag=dataset_tag, split=split, subset=subset

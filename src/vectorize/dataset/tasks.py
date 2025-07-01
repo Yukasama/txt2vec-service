@@ -37,7 +37,7 @@ async def upload_hf_dataset_bg(
     """
     async with AsyncSession(engine, expire_on_commit=False) as db:
         try:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
 
             for subset in subsets:
                 with ThreadPoolExecutor(max_workers=1) as executor:

@@ -1,6 +1,6 @@
 services:
   redis:
-    image: redis:7
+    image: redis:7-alpine
     container_name: vectorize_redis
     command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
     networks: [vectorize-network]
