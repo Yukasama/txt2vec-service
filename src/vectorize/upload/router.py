@@ -113,7 +113,6 @@ async def load_model_github(
     Args:
         data: The GitHub Model request Url object
         request: FastAPI request object.
-        background_tasks: FastAPI background task manager.
         db: Async database session.
 
     Returns:

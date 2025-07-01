@@ -150,7 +150,7 @@ async def _process_single_dataset(
 
     except SQLAlchemyError:
         if file_path and file_path.exists():
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             await loop.run_in_executor(None, file_path.unlink)
             logger.debug("Cleaned up file after database error", file_path=file_path)
         raise
