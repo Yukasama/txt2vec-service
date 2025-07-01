@@ -1,7 +1,6 @@
 """Task to upload Hugging Face datasets to the database."""
 
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
 from uuid import UUID
 
 import dramatiq
@@ -40,10 +39,9 @@ async def upload_hf_dataset_bg(
             loop = asyncio.get_running_loop()
 
             for subset in subsets:
-                with ThreadPoolExecutor(max_workers=1) as executor:
-                    info = await loop.run_in_executor(
-                        executor, _load_dataset_info, dataset_tag, subset
-                    )
+                info = await loop.run_in_executor(
+                    None, _load_dataset_info, dataset_tag, subset
+                )
 
                 logger.debug(
                     "Processing Hugging Face dataset",
