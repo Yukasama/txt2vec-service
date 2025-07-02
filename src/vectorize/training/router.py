@@ -118,4 +118,4 @@ async def get_training_status(
     task = await get_train_task_by_id_db(db, task_id)
     if not task:
         raise TrainingTaskNotFoundError(str(task_id))
-    return await TrainingStatusResponse.from_task(task, _db=db)
+    return TrainingStatusResponse.from_training_task(task)
