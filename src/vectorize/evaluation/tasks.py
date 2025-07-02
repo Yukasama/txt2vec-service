@@ -30,6 +30,10 @@ async def _run_baseline_evaluation(
     dataset_path: Path,
 ) -> None:
     """Run evaluation with baseline comparison."""
+    import asyncio
+    import concurrent.futures
+    import time
+    
     if not evaluation_request.baseline_model_tag:
         raise ValueError("Baseline model tag is required for comparison evaluation")
 
@@ -39,11 +43,31 @@ async def _run_baseline_evaluation(
 
     await db_manager.update_task_status(TaskStatus.RUNNING, progress=0.5)
 
-    trained_metrics_dict, baseline_metrics_dict = engine.get_comparison_metrics_dict(
-        dataset_path=dataset_path,
-        baseline_model_path=baseline_model_path,
-        max_samples=evaluation_request.max_samples,
-    )
+    def evaluate_in_thread():
+        """Run baseline evaluation in thread."""
+        return engine.get_comparison_metrics_dict(
+            dataset_path=dataset_path,
+            baseline_model_path=baseline_model_path,
+            max_samples=evaluation_request.max_samples,
+        )
+    
+    # Run evaluation in thread pool with yielding
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(evaluate_in_thread)
+        
+        start_time = time.time()
+        while not future.done():
+            await asyncio.sleep(3)  # Yield every 3 seconds
+            elapsed = time.time() - start_time
+            logger.debug(
+                "Baseline evaluation in progress...",
+                model_path=engine.model_path,
+                baseline_model=evaluation_request.baseline_model_tag,
+                elapsed_minutes=round(elapsed / 60, 1)
+            )
+        
+        # Get result
+        trained_metrics_dict, baseline_metrics_dict = future.result()
 
     summary = engine.calculate_improvement_summary(
         trained_metrics_dict, baseline_metrics_dict
@@ -63,11 +87,34 @@ async def _run_simple_evaluation(
     dataset_path: Path,
 ) -> None:
     """Run simple evaluation without baseline."""
+    import asyncio
+    import concurrent.futures
+    import time
+    
     await db_manager.update_task_status(TaskStatus.RUNNING, progress=0.5)
 
-    metrics_dict = engine.get_simple_metrics_dict(
-        dataset_path, evaluation_request.max_samples
-    )
+    def evaluate_in_thread():
+        """Run simple evaluation in thread."""
+        return engine.get_simple_metrics_dict(
+            dataset_path, evaluation_request.max_samples
+        )
+    
+    # Run evaluation in thread pool with yielding
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(evaluate_in_thread)
+        
+        start_time = time.time()
+        while not future.done():
+            await asyncio.sleep(3)  # Yield every 3 seconds
+            elapsed = time.time() - start_time
+            logger.debug(
+                "Simple evaluation in progress...",
+                model_path=engine.model_path,
+                elapsed_minutes=round(elapsed / 60, 1)
+            )
+        
+        # Get result
+        metrics_dict = future.result()
 
     summary = engine.calculate_simple_summary(metrics_dict)
 
@@ -77,7 +124,7 @@ async def _run_simple_evaluation(
     )
 
 
-@dramatiq.actor(max_retries=3)
+@dramatiq.actor(max_retries=3, queue_name="evaluation")
 async def run_evaluation_bg(
     evaluation_request_dict: dict,
     task_id: str,
@@ -124,7 +171,14 @@ async def run_evaluation_bg(
                 baseline_model_tag=evaluation_request.baseline_model_tag,
             )
 
-            engine_eval = EvaluationEngine(model_path)
+            # Load evaluation engine in executor to avoid blocking
+            import asyncio
+            loop = asyncio.get_running_loop()
+            
+            def create_engine():
+                return EvaluationEngine(model_path)
+            
+            engine_eval = await loop.run_in_executor(None, create_engine)
 
             if evaluation_request.baseline_model_tag:
                 await _run_baseline_evaluation(
