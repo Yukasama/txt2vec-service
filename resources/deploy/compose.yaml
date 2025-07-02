@@ -9,14 +9,14 @@ services:
       - hf_home_data:/app/data/hf_home
       - cache_data:/app/data/cache
     environment:
-      ENV: development
+      ENV: production
       DATABASE_URL: sqlite+aiosqlite:///db/app.db
       REDIS_URL: redis://redis:6379
       DATASETS_DIR: /app/data/datasets
       MODELS_DIR: /app/data/models
       DB_DIR: /app/db
       TZ: Europe/Berlin
-      LOG_LEVEL: DEBUG
+      LOG_LEVEL: INFO
       HF_HOME: /app/data/hf_home
     networks: [vectorize-network]
     restart: unless-stopped
