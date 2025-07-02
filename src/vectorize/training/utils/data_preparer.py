@@ -43,7 +43,7 @@ class TrainingDataPreparer:
         training_paths = dataset_paths[:-1]
         validation_path = dataset_paths[-1]
 
-        logger.info(
+        logger.debug(
             "Multi-dataset training setup",
             num_training_datasets=len(training_paths),
             has_validation_dataset=True,
@@ -119,7 +119,7 @@ class TrainingDataPreparer:
             }
         ]
 
-        logger.info(
+        logger.debug(
             "Single dataset training with auto-split",
             dataset_name=Path(dataset_path).name,
             total_samples=len(df),
@@ -156,7 +156,7 @@ class TrainingDataPreparer:
             )
             dataset_summary.append(summary)
 
-        logger.info(
+        logger.debug(
             "Training data preparation complete",
             total_datasets_used=len(dataset_stats),
             total_training_examples=total_train_examples,

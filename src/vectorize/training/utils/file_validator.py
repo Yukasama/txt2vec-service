@@ -22,7 +22,7 @@ class TrainingFileValidator:
         """
         for path in dataset_paths:
             TrainingFileValidator._validate_single_file(path)
-            logger.info("Validated dataset file", dataset_file=path)
+            logger.debug("Validated dataset file", dataset_file=path)
 
     @staticmethod
     def _validate_single_file(path: str) -> None:

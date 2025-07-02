@@ -51,7 +51,7 @@ async def run_training_bg(
                 output_dir=output_dir,
             )
 
-            logger.info(
+            logger.debug(
                 "Training task completed successfully",
                 task_id=task_id,
                 model_path=model_path,

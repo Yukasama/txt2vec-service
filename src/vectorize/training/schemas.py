@@ -86,7 +86,10 @@ class TrainingStatusResponse(BaseModel):
     end_date: str | None = None
     error_msg: str | None = None
     trained_model_id: str | None = None
-    validation_dataset_path: str | None = None
+
+    train_dataset_ids: list[str] | None = None
+    val_dataset_id: str | None = None
+    baseline_model_id: str | None = None
 
     train_runtime: float | None = None
     train_samples_per_second: float | None = None
@@ -95,7 +98,7 @@ class TrainingStatusResponse(BaseModel):
     epoch: float | None = None
 
     @classmethod
-    def from_task(cls, task: TrainingTask) -> "TrainingStatusResponse":
+    async def from_task(cls, task: "TrainingTask", db=None) -> "TrainingStatusResponse":
         """Create a TrainingStatusResponse from a TrainingTask object.
 
         Args:
@@ -114,6 +117,7 @@ class TrainingStatusResponse(BaseModel):
                 status_value = "F"
         else:
             status_value = "F"
+        baseline_model_id = getattr(task, "baseline_model_id", None)
         return cls(
             task_id=str(task.id),
             status=status_value,
@@ -121,7 +125,9 @@ class TrainingStatusResponse(BaseModel):
             end_date=str(getattr(task, "end_date", None)),
             error_msg=getattr(task, "error_msg", None),
             trained_model_id=str(getattr(task, "trained_model_id", "")) or None,
-            validation_dataset_path=getattr(task, "validation_dataset_path", None),
+            train_dataset_ids=getattr(task, "train_dataset_ids", None),
+            val_dataset_id=getattr(task, "val_dataset_id", None),
+            baseline_model_id=baseline_model_id,
             train_runtime=getattr(task, "train_runtime", None),
             train_samples_per_second=getattr(task, "train_samples_per_second", None),
             train_steps_per_second=getattr(task, "train_steps_per_second", None),

@@ -83,13 +83,34 @@ class TrainingOrchestrator:
         try:
             self.model = load_and_prepare_model(model_path)
 
-            train_dataloader, validation_dataset_path = (
+            train_dataloader, _ = (
                 TrainingDataPreparer.prepare_training_data(
                     dataset_paths, train_request.per_device_train_batch_size
                 )
             )
 
-            await self.db_manager.update_validation_dataset(validation_dataset_path)
+            JSONL_SUFFIX = '.jsonl'
+
+            def extract_id(filename: str) -> str | None:
+                if '_' in filename and filename.endswith(JSONL_SUFFIX):
+                    return filename.rsplit('_', 1)[-1].replace(JSONL_SUFFIX, '')
+                return None
+
+            import os
+            if len(dataset_paths) == 1:
+                train_file = os.path.basename(str(dataset_paths[0]))
+                train_id = extract_id(train_file)
+                await self.db_manager.update_dataset_ids([train_id] if train_id else [], val_dataset_id=None)
+            else:
+                train_ids = []
+                for path in dataset_paths[:-1]:
+                    file = os.path.basename(str(path))
+                    tid = extract_id(file)
+                    if tid:
+                        train_ids.append(tid)
+                val_file = os.path.basename(str(dataset_paths[-1]))
+                val_id = extract_id(val_file)
+                await self.db_manager.update_dataset_ids(train_ids, val_dataset_id=val_id)
 
             training_engine = SBERTTrainingEngine(self.model)
             training_metrics = training_engine.train_model(
