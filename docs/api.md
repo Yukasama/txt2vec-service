@@ -41,7 +41,7 @@ Currently, the API does not require authentication.
 
 ### Error Handling
 
-The API uses standardized error codes defined in `config/errors.py` for consistent error handling across all endpoints. This helps differenciating errors easier in the Web application. Error responses follow this format:
+The API uses standardized error codes defined in `config/errors.py` for consistent error handling across all endpoints. This helps differentiating errors easier in the Web application. Error responses follow this format:
 
 ```json
 {
