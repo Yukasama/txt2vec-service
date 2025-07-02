@@ -71,17 +71,9 @@ dependencies = [
     "datasets>=3.6.0",
     "dramatiq>=1.18.0",
     "redis>=6.2.0",
-<<<<<<< HEAD
-    "sentence-transformers==5.0.0",
-    "accelerate>=1.7.0",
-=======
     "sentence-transformers>=4.1.0",
-    "accelerate>=1.7.0"
->>>>>>> origin/main
-<<<<<<< HEAD
-=======
+    "accelerate>=1.7.0",
     "gunicorn>=23.0.0",
->>>>>>> origin/main
 ]
 
 [project.scripts]
