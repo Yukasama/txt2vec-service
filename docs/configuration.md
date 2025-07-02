@@ -34,7 +34,7 @@ DATABASE_URL=sqlite+aiosqlite:///app.db
 LOG_LEVEL=DEBUG|INFO|WARNING|ERROR|CRITICAL
 
 # Directory Overrides (useful for containerized deployments)
-UPLOAD_DIR=/custom/path/datasets
+DATASETS_DIR=/custom/path/datasets
 MODELS_DIR=/custom/path/models
 DB_DIR=/custom/path/db
 
@@ -108,7 +108,7 @@ Dataset upload, processing, and validation settings:
 #### File Handling & Storage
 
 - **`upload_dir`** (default: `"data/datasets"`): Directory for uploaded datasets
-  - Override with `UPLOAD_DIR` environment variable for containerized deployments
+  - Override with `DATASETS_DIR` environment variable for containerized deployments
 - **`max_upload_size`** (default: `53687091200`): Maximum file size in bytes (50 GB default)
   - Prevents disk space exhaustion from large uploads
   - Can be overridden with `MAX_UPLOAD_SIZE` environment variable
@@ -239,7 +239,7 @@ REDIS_URL=redis://localhost:56379
 ENV=production
 LOG_LEVEL=INFO
 DATABASE_URL=sqlite+aiosqlite:///app/db/app.db
-UPLOAD_DIR=/app/data/datasets
+DATASETS_DIR=/app/data/datasets
 MODELS_DIR=/app/data/models
 REDIS_URL=redis://redis:6379
 ```

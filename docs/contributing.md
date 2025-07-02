@@ -150,7 +150,7 @@ docker compose up vectorize dramatiq_worker redis caddy
 uvx locust -f scripts/locust.py
 
 # Headless load testing
-uvx locust -f scripts/locust.py --host=http://localhost:8000 --headless --users 10 --run-time 1m
+uvx locust -f scripts/locust.py --host=https://localhost/v1/api/health --headless --users 10 --run-time 1m
 ```
 
 ### Database Management
