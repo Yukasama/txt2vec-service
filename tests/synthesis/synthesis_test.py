@@ -16,31 +16,25 @@ _MALFORMED_UUID = "not-a-valid-uuid"
 _SYNTHESIS_MEDIA = "/synthesis/media"
 _SYNTHESIS_ENDPOINT = "/synthesis"
 
-# Test dataset ID (from existing test data)
 TEST_DATASET_ID = "0b30b284-f7fe-4e6c-a270-17cafc5b5bcb"
 
-# Test data paths
 TEST_DATA_DIR = (
     Path(__file__).parent.parent.parent / "test_data" / "synthesis" / "valid"
 )
 
-# Test file names
 TEST_PDF_FILENAME = "test_data.pdf"
 TEST_JPG_FILENAME = "test_data.jpg"
 TEST_PNG_FILENAME = "test_data.png"
 
-# Test file paths
 TEST_PDF_PATH = TEST_DATA_DIR / TEST_PDF_FILENAME
 TEST_JPG_PATH = TEST_DATA_DIR / TEST_JPG_FILENAME
 TEST_PNG_PATH = TEST_DATA_DIR / TEST_PNG_FILENAME
 
-# Test constants
 EXPECTED_FILE_COUNT_MULTIPLE = 3
 LIMIT_PARAMETER_TEST = 5
 LIMIT_PARAMETER_MAX = 100
 HTTP_STATUS_CREATED = 201
 
-# MIME types
 MIME_TEXT_PLAIN = "text/plain"
 MIME_APPLICATION_PDF = "application/pdf"
 MIME_IMAGE_JPEG = "image/jpeg"
@@ -49,7 +43,6 @@ MIME_APPLICATION_DOCX = (
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 )
 
-# Valid task statuses
 VALID_TASK_STATUSES = {
     TaskStatus.QUEUED,
     TaskStatus.RUNNING,
@@ -343,7 +336,6 @@ class TestSynthesisTasks:
 
         created_task_id = create_response.json()["task_id"]
 
-        # Now list tasks
         response = client.get(_SYNTHESIS_ENDPOINT)
         assert response.status_code == status.HTTP_200_OK
 
@@ -415,10 +407,8 @@ class TestSynthesisTasks:
         cls, client: TestClient
     ) -> None:
         """Test creating synthesis task with existing dataset ID."""
-        # Use existing test dataset ID
         response = client.post(_SYNTHESIS_MEDIA, data={"dataset_id": TEST_DATASET_ID})
 
-        # Expect successful synthesis task creation
         assert response.status_code == status.HTTP_202_ACCEPTED
         response_data = response.json()
 

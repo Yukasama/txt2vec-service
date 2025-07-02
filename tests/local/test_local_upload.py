@@ -14,6 +14,7 @@ from tests.utils import get_test_zip_file
 from vectorize.config.config import settings
 
 
+@pytest.mark.asyncio
 @pytest.mark.upload
 class TestZipModelUpload:
     """Tests for uploading models via ZIP files."""
@@ -54,7 +55,6 @@ class TestZipModelUpload:
         assert len(model_files) > 0, "Model directory should contain extracted files"
 
     @staticmethod
-    @pytest.mark.asyncio
     async def test_invalid_file_extension(client: TestClient) -> None:
         """Test uploading a file with an invalid extension."""
         invalid_file_path = TestZipModelUpload._base_dir / "invalid_file.txt"

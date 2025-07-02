@@ -20,7 +20,6 @@ class TestInferenceCounter:
         """Test basic counter increment with successful embedding requests."""
         payload = {"model": _MODEL_NAME, "input": "This is a test sentence."}
 
-        # Check inference counter
         counter_response = client.get(f"/embeddings/counter/{_MODEL_NAME}")
         assert counter_response.status_code == status.HTTP_200_OK
         first_key = next(iter(counter_response.json()))
@@ -29,7 +28,6 @@ class TestInferenceCounter:
         response = client.post("/embeddings", json=payload)
         assert response.status_code == status.HTTP_200_OK
 
-        # Check inference counter
         counter_response = client.get(f"/embeddings/counter/{_MODEL_NAME}")
         assert counter_response.status_code == status.HTTP_200_OK
         first_key = next(iter(counter_response.json()))
@@ -38,7 +36,6 @@ class TestInferenceCounter:
         response = client.post("/embeddings", json=payload)
         assert response.status_code == status.HTTP_200_OK
 
-        # Check inference counter
         counter_response = client.get(f"/embeddings/counter/{_MODEL_NAME}")
         assert counter_response.status_code == status.HTTP_200_OK
         first_key = next(iter(counter_response.json()))
@@ -49,7 +46,6 @@ class TestInferenceCounter:
         """Test counter behavior with non-existent model requests."""
         payload = {"model": _BAD_MODEL_NAME, "input": "This is a test sentence."}
 
-        # Check inference counter
         counter_response = client.get(f"/embeddings/counter/{_BAD_MODEL_NAME}")
         assert counter_response.status_code == status.HTTP_404_NOT_FOUND
         first_key = next(iter(counter_response.json()))
@@ -58,7 +54,6 @@ class TestInferenceCounter:
         response = client.post("/embeddings", json=payload)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-        # Check inference counter
         counter_response = client.get(f"/embeddings/counter/{_BAD_MODEL_NAME}")
         assert counter_response.status_code == status.HTTP_404_NOT_FOUND
         first_key = next(iter(counter_response.json()))
@@ -67,7 +62,6 @@ class TestInferenceCounter:
         response = client.post("/embeddings", json=payload)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-        # Check inference counter
         counter_response = client.get(f"/embeddings/counter/{_BAD_MODEL_NAME}")
         assert counter_response.status_code == status.HTTP_404_NOT_FOUND
         first_key = next(iter(counter_response.json()))
