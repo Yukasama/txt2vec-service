@@ -196,34 +196,26 @@ class TestEvaluationIntegration:
     ) -> None:
         """Test resolving dataset using training_task_id."""
         # Create test training task
-        task = TrainingTask(id=uuid4(), model_tag="test-model")
+        task_id = uuid4()
+        task = TrainingTask(id=task_id, model_tag="test-model")
         await save_training_task_db(session, task)
 
-        # Create validation dataset file
-        validation_path = settings.dataset_upload_dir / "validation_test.jsonl"
-        validation_path.parent.mkdir(parents=True, exist_ok=True)
-        validation_path.write_text(
-            '{"question": "test", "positive": "pos", "negative": "neg"}\n'
-        )
+        # Create validation dataset and save to database
+        async with TestDatasetFactory.create_dataset(
+            session, DEFAULT_TEST_DATA, "Validation Test Dataset"
+        ) as (dataset_id, validation_path):
+            # Update task with validation dataset ID
+            await update_training_task_validation_dataset_db(
+                session, task_id, str(dataset_id)
+            )
 
-        # Update task with validation dataset path
-        await update_training_task_validation_dataset_db(
-            session, task.id, str(validation_path)
-        )
-
-        try:
             # Test request with training_task_id
             request = EvaluationRequest(
-                model_tag="test-model", training_task_id=str(task.id), max_samples=100
+                model_tag="test-model", training_task_id=str(task_id), max_samples=100
             )
 
             result_path = await resolve_evaluation_dataset_svc(session, request)
             assert result_path == validation_path
-
-        finally:
-            # Cleanup
-            if validation_path.exists():
-                validation_path.unlink()
 
     @pytest.mark.asyncio
     async def test_resolve_dataset_with_both_ids_fails(

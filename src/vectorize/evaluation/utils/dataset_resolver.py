@@ -6,6 +6,7 @@ from uuid import UUID
 from loguru import logger
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from vectorize.config.config import settings
 from vectorize.dataset.repository import get_dataset_db
 from vectorize.training.exceptions import (
     InvalidDatasetIdError,
@@ -104,7 +105,7 @@ class EvaluationDatasetResolver:
         if not dataset:
             raise TrainingDatasetNotFoundError(f"Dataset not found: {dataset_id}")
 
-        dataset_path = Path("data/datasets") / dataset.file_name
+        dataset_path = settings.dataset_upload_dir / dataset.file_name
         if not dataset_path.exists():
             raise TrainingDatasetNotFoundError(
                 f"Dataset file not found: {dataset_path}"
@@ -145,12 +146,23 @@ class EvaluationDatasetResolver:
                 f"Training task not found: {training_task_id}"
             )
 
-        if not training_task.validation_dataset_path:
+        if not training_task.val_dataset_id:
             raise TrainingDatasetNotFoundError(
-                f"Training task {training_task_id} has no validation dataset path"
+                f"Training task {training_task_id} has no validation dataset ID"
             )
 
-        dataset_path = Path(training_task.validation_dataset_path)
+        try:
+            val_dataset_uuid = UUID(training_task.val_dataset_id)
+        except ValueError as exc:
+            raise InvalidDatasetIdError(training_task.val_dataset_id) from exc
+
+        val_dataset = await get_dataset_db(db, val_dataset_uuid)
+        if not val_dataset:
+            raise TrainingDatasetNotFoundError(
+                f"Validation dataset not found: {training_task.val_dataset_id}"
+            )
+
+        dataset_path = settings.dataset_upload_dir / val_dataset.file_name
         if not dataset_path.exists():
             raise TrainingDatasetNotFoundError(
                 f"Validation dataset file not found: {dataset_path}"
@@ -159,6 +171,7 @@ class EvaluationDatasetResolver:
         logger.info(
             "Using validation dataset from training task",
             training_task_id=training_task_id,
+            val_dataset_id=training_task.val_dataset_id,
             validation_dataset_path=str(dataset_path),
         )
         return dataset_path

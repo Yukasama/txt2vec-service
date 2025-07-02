@@ -88,6 +88,7 @@ class TrainingStatusResponse(BaseModel):
     task_id: str
     status: str
     created_at: str | None = None
+    updated_at: str | None = None
     end_date: str | None = None
     error_msg: str | None = None
     trained_model_id: str | None = None
@@ -130,6 +131,7 @@ class TrainingStatusResponse(BaseModel):
             task_id=str(task.id),
             status=status_value,
             created_at=str(getattr(task, "created_at", None)),
+            updated_at=str(getattr(task, "updated_at", None)),
             end_date=str(getattr(task, "end_date", None)),
             error_msg=getattr(task, "error_msg", None),
             trained_model_id=str(getattr(task, "trained_model_id", "")) or None,

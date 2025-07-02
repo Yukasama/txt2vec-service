@@ -109,19 +109,19 @@ async def update_training_task_metrics_db(
 
 
 async def update_training_task_validation_dataset_db(
-    db: AsyncSession, task_id: UUID, validation_dataset_path: str
+    db: AsyncSession, task_id: UUID, val_dataset_id: str
 ) -> None:
-    """Update the validation dataset path of a TrainingTask.
+    """Update the validation dataset ID of a TrainingTask.
 
     Args:
         db (AsyncSession): The database session.
         task_id (UUID): The ID of the training task.
-        validation_dataset_path (str): Path to the validation dataset.
+        val_dataset_id (str): ID of the validation dataset.
     """
     result = await db.exec(select(TrainingTask).where(TrainingTask.id == task_id))
     task = result.first()
     if task:
-        task.validation_dataset_path = validation_dataset_path
+        task.val_dataset_id = val_dataset_id
         task.updated_at = datetime.now(UTC)
         await db.commit()
         await db.refresh(task)
