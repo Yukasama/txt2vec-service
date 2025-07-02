@@ -27,7 +27,7 @@ class TestZipModelUpload:
     _multiple_models_zip = _base_dir / "multiple_model.zip"
     _filtered_test_zip = _base_dir / "filtered_test_model.zip"
 
-    def test_valid_zip_upload(self, client: TestClient) -> None:
+    async def test_valid_zip_upload(self, client: TestClient) -> None:  # NOSONAR
         """Test uploading a valid ZIP file with model files."""
         files = get_test_zip_file(TestZipModelUpload._valid_zip)
 
@@ -71,7 +71,7 @@ class TestZipModelUpload:
         assert response.json()["code"] == "INVALID_FILE"
 
     @staticmethod
-    def test_empty_zip_upload(client: TestClient) -> None:
+    async def test_empty_zip_upload(client: TestClient) -> None:
         """Test uploading an empty ZIP file."""
         files = get_test_zip_file(TestZipModelUpload._empty_zip)
 
@@ -85,7 +85,7 @@ class TestZipModelUpload:
         assert response.json()["code"] == "INVALID_FILE"
 
     @staticmethod
-    def test_zip_without_models(client: TestClient) -> None:
+    async def test_zip_without_models(client: TestClient) -> None:
         """Test uploading a ZIP file without valid model files."""
         files = get_test_zip_file(TestZipModelUpload._no_model_zip)
 
@@ -99,7 +99,7 @@ class TestZipModelUpload:
         assert response.json()["code"] == "INVALID_FILE"
 
     @staticmethod
-    def test_duplicate_model(client: TestClient) -> None:
+    async def test_duplicate_model(client: TestClient) -> None:
         """Test uploading a ZIP file with a copy of the model."""
         files = get_test_zip_file(TestZipModelUpload._duplicate_model_zip)
 
@@ -112,7 +112,7 @@ class TestZipModelUpload:
         assert response.json()["code"] == "MODEL_ALREADY_EXISTS"
 
     @classmethod
-    def test_multiple_model(cls, client: TestClient) -> None:
+    async def test_multiple_model(cls, client: TestClient) -> None:
         """Test uploading a ZIP file with a copy of the model."""
         files = get_test_zip_file(TestZipModelUpload._multiple_models_zip)
         file_count = 2
@@ -132,7 +132,7 @@ class TestZipModelUpload:
         assert len(response.json()["items"]) == models_length + file_count
 
     @staticmethod
-    def test_file_filtering_extraction(client: TestClient) -> None:
+    async def test_file_filtering_extraction(client: TestClient) -> None:
         """Test that only model files and JSON files are extracted from ZIP."""
         files = get_test_zip_file(TestZipModelUpload._filtered_test_zip)
 

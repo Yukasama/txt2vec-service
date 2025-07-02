@@ -89,7 +89,9 @@ class TestValidDatasets:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["items"]) == datasets_length + file_length
 
-    def test_zip_partial_invalid_upload(self, client: TestClient) -> None:
+    async def test_zip_partial_invalid_upload(
+        self, client: TestClient
+    ) -> None:  # NOSONAR #noqa
         """Uploading a ZIP archive succeeds and returns 201."""
         file_path = self.valid_dir / "partial.zip"
 
