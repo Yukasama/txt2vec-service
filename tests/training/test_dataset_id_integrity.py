@@ -1,10 +1,17 @@
+# ruff: noqa: S101
+
 """Test dataset ID integrity in training tasks."""
 
-import pytest
+import shutil
+from pathlib import Path
 from uuid import UUID
+
+import pytest
+from fastapi import status
 from fastapi.testclient import TestClient
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from vectorize.config import settings
 from vectorize.training.repository import get_train_task_by_id_db
 
 # Test constants matching those in other test files
@@ -12,13 +19,13 @@ DATASET_ID_1 = "0b30b284-f7fe-4e6c-a270-17cafc5b5bcb"
 DATASET_ID_2 = "0a9d5e87-e497-4737-9829-2070780d10df"
 MINILM_MODEL_TAG = "models--sentence-transformers--all-MiniLM-L6-v2"
 
+# HTTP Status codes
+HTTP_200_OK = status.HTTP_200_OK
+HTTP_202_ACCEPTED = status.HTTP_202_ACCEPTED
+
 
 def ensure_minilm_model_available() -> None:
     """Ensure the required model files are present for training tests."""
-    from pathlib import Path
-    import shutil
-    from vectorize.config import settings
-    
     src = Path("test_data/training/models--sentence-transformers--all-MiniLM-L6-v2")
     dst = settings.model_upload_dir / "models--sentence-transformers--all-MiniLM-L6-v2"
     if not dst.exists() and src.exists():
@@ -35,7 +42,7 @@ class TestDatasetIdIntegrity:
     ) -> None:
         """Test that training task stores correct dataset ID for single dataset."""
         ensure_minilm_model_available()
-        
+
         payload = {
             "model_tag": MINILM_MODEL_TAG,
             "train_dataset_ids": [DATASET_ID_1],
@@ -45,7 +52,7 @@ class TestDatasetIdIntegrity:
         }
 
         response = client.post("/training/train", json=payload)
-        assert response.status_code == 202
+        assert response.status_code == HTTP_202_ACCEPTED
 
         # Get task ID from location header
         location = response.headers.get("Location")
@@ -54,7 +61,7 @@ class TestDatasetIdIntegrity:
 
         # Check the status immediately to get the stored dataset IDs
         status_response = client.get(f"/training/{task_id}/status")
-        assert status_response.status_code == 200
+        assert status_response.status_code == HTTP_200_OK
 
         status_data = status_response.json()
         assert "train_dataset_ids" in status_data
@@ -67,7 +74,7 @@ class TestDatasetIdIntegrity:
     ) -> None:
         """Test that training task stores correct dataset IDs for multiple datasets."""
         ensure_minilm_model_available()
-        
+
         payload = {
             "model_tag": MINILM_MODEL_TAG,
             "train_dataset_ids": [DATASET_ID_1, DATASET_ID_2],
@@ -77,7 +84,7 @@ class TestDatasetIdIntegrity:
         }
 
         response = client.post("/training/train", json=payload)
-        assert response.status_code == 202
+        assert response.status_code == HTTP_202_ACCEPTED
 
         # Get task ID from location header
         location = response.headers.get("Location")
@@ -86,7 +93,7 @@ class TestDatasetIdIntegrity:
 
         # Check the status immediately to get the stored dataset IDs
         status_response = client.get(f"/training/{task_id}/status")
-        assert status_response.status_code == 200
+        assert status_response.status_code == HTTP_200_OK
 
         status_data = status_response.json()
         assert "train_dataset_ids" in status_data
@@ -99,7 +106,7 @@ class TestDatasetIdIntegrity:
     ) -> None:
         """Test that training task stores correct validation dataset ID."""
         ensure_minilm_model_available()
-        
+
         payload = {
             "model_tag": MINILM_MODEL_TAG,
             "train_dataset_ids": [DATASET_ID_1],
@@ -110,7 +117,7 @@ class TestDatasetIdIntegrity:
         }
 
         response = client.post("/training/train", json=payload)
-        assert response.status_code == 202
+        assert response.status_code == HTTP_202_ACCEPTED
 
         # Get task ID from location header
         location = response.headers.get("Location")
@@ -119,7 +126,7 @@ class TestDatasetIdIntegrity:
 
         # Check the status immediately to get the stored dataset IDs
         status_response = client.get(f"/training/{task_id}/status")
-        assert status_response.status_code == 200
+        assert status_response.status_code == HTTP_200_OK
 
         status_data = status_response.json()
         assert "train_dataset_ids" in status_data
@@ -135,7 +142,7 @@ class TestDatasetIdIntegrity:
     ) -> None:
         """Test that dataset IDs in the database match the original request."""
         ensure_minilm_model_available()
-        
+
         original_train_ids = [DATASET_ID_1, DATASET_ID_2]
         original_val_id = DATASET_ID_1  # Using DATASET_ID_1 as validation
 
@@ -149,7 +156,7 @@ class TestDatasetIdIntegrity:
         }
 
         response = client.post("/training/train", json=payload)
-        assert response.status_code == 202
+        assert response.status_code == HTTP_202_ACCEPTED
 
         # Get task ID from location header
         location = response.headers.get("Location")
@@ -166,8 +173,8 @@ class TestDatasetIdIntegrity:
 
         # Also verify via API response
         status_response = client.get(f"/training/{task_id}/status")
-        assert status_response.status_code == 200
-        
+        assert status_response.status_code == HTTP_200_OK
+
         status_data = status_response.json()
         assert status_data["train_dataset_ids"] == original_train_ids
         assert status_data["val_dataset_id"] == original_val_id

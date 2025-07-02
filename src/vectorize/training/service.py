@@ -3,7 +3,6 @@
 import asyncio
 import concurrent.futures
 import time
-from pathlib import Path
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -126,9 +125,11 @@ class TrainingOrchestrator:
         finally:
             self._cleanup_resources()
 
-    async def _update_dataset_ids_from_request(self, train_request: TrainRequest) -> None:
+    async def _update_dataset_ids_from_request(
+        self, train_request: TrainRequest
+    ) -> None:
         """Update dataset IDs using the correct values from the training request.
-        
+
         Args:
             train_request: Training request containing the actual dataset IDs
         """
