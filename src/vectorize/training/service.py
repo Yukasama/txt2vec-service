@@ -103,8 +103,8 @@ class TrainingOrchestrator:
                 )
             train_dataloader, _ = await loop.run_in_executor(None, prepare_data)
 
-            # Dataset ID extraction and updating
-            await self._update_dataset_ids(dataset_paths)
+            # Update dataset IDs with the correct values from train_request
+            await self._update_dataset_ids_from_request(train_request)
 
             # Training in executor with periodic yielding
             training_metrics = await self._train_with_yielding(
@@ -126,31 +126,23 @@ class TrainingOrchestrator:
         finally:
             self._cleanup_resources()
 
-    async def _update_dataset_ids(self, dataset_paths: list[str]) -> None:
-        """Extract and update dataset IDs from file paths."""
-        jsonl_suffix = '.jsonl'
+    async def _update_dataset_ids_from_request(self, train_request: TrainRequest) -> None:
+        """Update dataset IDs using the correct values from the training request.
+        
+        Args:
+            train_request: Training request containing the actual dataset IDs
+        """
+        await self.db_manager.update_dataset_ids(
+            train_request.train_dataset_ids,
+            val_dataset_id=train_request.val_dataset_id
+        )
 
-        def extract_id(filename: str) -> str | None:
-            if '_' in filename and filename.endswith(jsonl_suffix):
-                return filename.rsplit('_', 1)[-1].replace(jsonl_suffix, '')
-            return None
-
-        if len(dataset_paths) == 1:
-            train_file = Path(dataset_paths[0]).name
-            train_id = extract_id(train_file)
-            await self.db_manager.update_dataset_ids(
-                [train_id] if train_id else [], val_dataset_id=None
-            )
-        else:
-            train_ids = []
-            for path in dataset_paths[:-1]:
-                file = Path(path).name
-                tid = extract_id(file)
-                if tid:
-                    train_ids.append(tid)
-            val_file = Path(dataset_paths[-1]).name
-            val_id = extract_id(val_file)
-            await self.db_manager.update_dataset_ids(train_ids, val_dataset_id=val_id)
+        logger.debug(
+            "Updated training task with correct dataset IDs from request",
+            task_id=str(self.task_id),
+            train_dataset_ids=train_request.train_dataset_ids,
+            val_dataset_id=train_request.val_dataset_id,
+        )
 
     async def _train_with_yielding(
         self,
