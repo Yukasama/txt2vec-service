@@ -10,7 +10,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from .exceptions import DatasetValidationError
 from .schemas import TrainRequest
 from .utils import (
-    AsyncSBERTTrainingEngine,
+    SBERTTrainingEngine,
     TrainingDataPreparer,
     TrainingDatabaseManager,
     TrainingDatasetValidator,
@@ -147,15 +147,42 @@ class TrainingOrchestrator:
     async def _train_with_yielding(
         self, train_dataloader, train_request, output_dir: str
     ):
-        """Train model with async yielding to allow other tasks."""
+        """Train model with yielding to prevent blocking other workers."""
         if self.model is None:
             raise RuntimeError("Model was not loaded correctly.")
 
-        # Use the new async training engine
-        async_training_engine = AsyncSBERTTrainingEngine(self.model)
-        return await async_training_engine.train_model_async(
-            train_dataloader, train_request, output_dir, yield_interval_steps=50
-        )
+        # Use ThreadPoolExecutor with yielding - simpler and more reliable
+        import concurrent.futures
+        import time
+
+        def train_in_thread():
+            """Run training in thread with periodic status updates."""
+            try:
+                if self.model is None:
+                    raise RuntimeError("Model was not loaded correctly.")
+                training_engine = SBERTTrainingEngine(self.model)
+                return training_engine.train_model(train_dataloader, train_request, output_dir)
+            except Exception as e:
+                logger.error("Training failed in thread", error=str(e), task_id=str(self.task_id))
+                raise
+
+        # Submit to thread pool
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(train_in_thread)
+
+            start_time = time.time()
+            # Yield control every 3 seconds while training runs
+            while not future.done():
+                await asyncio.sleep(3)
+                elapsed = time.time() - start_time
+                logger.debug(
+                    "Training in progress...",
+                    task_id=str(self.task_id),
+                    elapsed_minutes=round(elapsed / 60, 1)
+                )
+
+            # Get result or raise exception
+            return future.result()
 
     def _cleanup_resources(self) -> None:
         """Clean up resources after training."""
