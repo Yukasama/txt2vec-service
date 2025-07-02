@@ -2,7 +2,6 @@
 
 from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
-from typing import TYPE_CHECKING
 from uuid import UUID
 
 from loguru import logger
@@ -15,10 +14,6 @@ from vectorize.config import settings
 from .exceptions import ModelNotFoundError
 from .models import AIModel, AIModelUpdate
 from .utils.model_deletion import remove_model_from_memory
-
-if TYPE_CHECKING:
-    from vectorize.inference.models import InferenceCounter
-
 
 __all__ = [
     "delete_model_db",
@@ -48,6 +43,8 @@ async def get_models_paged_db(
     Raises:
         NoModelFoundError: If there are no models in the database.
     """
+    from vectorize.inference.models import InferenceCounter  # noqa: PLC0415
+
     page = max(1, page)
     size = max(1, size)
     cutoff_date = datetime.now(UTC) - timedelta(days=settings.model_inference_limiter)
