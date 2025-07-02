@@ -1,9 +1,14 @@
 """Schemas for SBERT/SentenceTransformer triplet training."""
 
+from typing import TYPE_CHECKING
+
 from pydantic import BaseModel, Field
 
 from vectorize.task.task_status import TaskStatus
 from vectorize.training.models import TrainingTask
+
+if TYPE_CHECKING:
+    from sqlmodel.ext.asyncio.session import AsyncSession
 
 
 class TrainRequest(BaseModel):
@@ -98,11 +103,14 @@ class TrainingStatusResponse(BaseModel):
     epoch: float | None = None
 
     @classmethod
-    async def from_task(cls, task: "TrainingTask", db=None) -> "TrainingStatusResponse":
+    async def from_task(
+        cls, task: "TrainingTask", _db: "AsyncSession | None" = None
+    ) -> "TrainingStatusResponse":
         """Create a TrainingStatusResponse from a TrainingTask object.
 
         Args:
             task: The TrainingTask instance.
+            db: Optional database session (unused but kept for compatibility).
 
         Returns:
             TrainingStatusResponse: The response object.

@@ -1,11 +1,17 @@
 """Orchestrates the end-to-end SBERT training process."""
 
-
 import asyncio
+import concurrent.futures
+import time
+from pathlib import Path
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from loguru import logger
 from sqlmodel.ext.asyncio.session import AsyncSession
+
+if TYPE_CHECKING:
+    from torch.utils.data import DataLoader
 
 from .exceptions import DatasetValidationError
 from .schemas import TrainRequest
@@ -86,10 +92,12 @@ class TrainingOrchestrator:
             loop = asyncio.get_running_loop()
 
             # Model loading in executor
-            self.model = await loop.run_in_executor(None, load_and_prepare_model, model_path)
+            self.model = await loop.run_in_executor(
+                None, load_and_prepare_model, model_path
+            )
 
             # Data preparation in executor
-            def prepare_data():
+            def prepare_data() -> tuple:
                 return TrainingDataPreparer.prepare_training_data(
                     dataset_paths, train_request.per_device_train_batch_size
                 )
@@ -120,50 +128,57 @@ class TrainingOrchestrator:
 
     async def _update_dataset_ids(self, dataset_paths: list[str]) -> None:
         """Extract and update dataset IDs from file paths."""
-        import os
-
-        JSONL_SUFFIX = '.jsonl'
+        jsonl_suffix = '.jsonl'
 
         def extract_id(filename: str) -> str | None:
-            if '_' in filename and filename.endswith(JSONL_SUFFIX):
-                return filename.rsplit('_', 1)[-1].replace(JSONL_SUFFIX, '')
+            if '_' in filename and filename.endswith(jsonl_suffix):
+                return filename.rsplit('_', 1)[-1].replace(jsonl_suffix, '')
             return None
 
         if len(dataset_paths) == 1:
-            train_file = os.path.basename(str(dataset_paths[0]))
+            train_file = Path(dataset_paths[0]).name
             train_id = extract_id(train_file)
-            await self.db_manager.update_dataset_ids([train_id] if train_id else [], val_dataset_id=None)
+            await self.db_manager.update_dataset_ids(
+                [train_id] if train_id else [], val_dataset_id=None
+            )
         else:
             train_ids = []
             for path in dataset_paths[:-1]:
-                file = os.path.basename(str(path))
+                file = Path(path).name
                 tid = extract_id(file)
                 if tid:
                     train_ids.append(tid)
-            val_file = os.path.basename(str(dataset_paths[-1]))
+            val_file = Path(dataset_paths[-1]).name
             val_id = extract_id(val_file)
             await self.db_manager.update_dataset_ids(train_ids, val_dataset_id=val_id)
 
     async def _train_with_yielding(
-        self, train_dataloader, train_request, output_dir: str
-    ):
+        self,
+        train_dataloader: "DataLoader",
+        train_request: TrainRequest,
+        output_dir: str,
+    ) -> dict:
         """Train model with yielding to prevent blocking other workers."""
         if self.model is None:
             raise RuntimeError("Model was not loaded correctly.")
 
         # Use ThreadPoolExecutor with yielding - simpler and more reliable
-        import concurrent.futures
-        import time
 
-        def train_in_thread():
+        def train_in_thread() -> dict:
             """Run training in thread with periodic status updates."""
             try:
                 if self.model is None:
                     raise RuntimeError("Model was not loaded correctly.")
                 training_engine = SBERTTrainingEngine(self.model)
-                return training_engine.train_model(train_dataloader, train_request, output_dir)
+                return training_engine.train_model(
+                    train_dataloader, train_request, output_dir
+                )
             except Exception as e:
-                logger.error("Training failed in thread", error=str(e), task_id=str(self.task_id))
+                logger.error(
+                    "Training failed in thread",
+                    error=str(e),
+                    task_id=str(self.task_id)
+                )
                 raise
 
         # Submit to thread pool

@@ -13,6 +13,7 @@ from vectorize.task.task_status import TaskStatus
 
 from ..repository import (
     get_train_task_by_id_db,
+    update_training_task_dataset_ids_db,
     update_training_task_metrics_db,
     update_training_task_status_db,
 )
@@ -20,29 +21,6 @@ from ..schemas import TrainRequest
 
 
 class TrainingDatabaseManager:
-
-    async def update_dataset_ids(
-        self,
-        train_dataset_ids: list[str],
-        val_dataset_id: str | None = None
-    ) -> None:
-        """Update the training task with dataset IDs.
-
-        Args:
-            train_dataset_ids: List of training dataset IDs
-            val_dataset_id: Optional validation dataset ID
-        """
-        from ..repository import update_training_task_dataset_ids_db
-        await update_training_task_dataset_ids_db(
-            self.db, self.task_id, train_dataset_ids, val_dataset_id
-        )
-
-        logger.debug(
-            "Updated training task with dataset IDs",
-            task_id=str(self.task_id),
-            train_dataset_ids=train_dataset_ids,
-            val_dataset_id=val_dataset_id,
-        )
     """Handles database operations for training tasks."""
 
     def __init__(self, db: AsyncSession, task_id: UUID) -> None:
@@ -125,4 +103,26 @@ class TrainingDatabaseManager:
         logger.debug(
             "Training task marked as complete",
             task_id=str(self.task_id),
+        )
+
+    async def update_dataset_ids(
+        self,
+        train_dataset_ids: list[str],
+        val_dataset_id: str | None = None
+    ) -> None:
+        """Update the training task with dataset IDs.
+
+        Args:
+            train_dataset_ids: List of training dataset IDs
+            val_dataset_id: Optional validation dataset ID
+        """
+        await update_training_task_dataset_ids_db(
+            self.db, self.task_id, train_dataset_ids, val_dataset_id
+        )
+
+        logger.debug(
+            "Updated training task with dataset IDs",
+            task_id=str(self.task_id),
+            train_dataset_ids=train_dataset_ids,
+            val_dataset_id=val_dataset_id,
         )
