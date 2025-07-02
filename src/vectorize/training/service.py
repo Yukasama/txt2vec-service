@@ -1,5 +1,7 @@
 """Orchestrates the end-to-end SBERT training process."""
 
+
+import asyncio
 from uuid import UUID
 
 from loguru import logger
@@ -8,7 +10,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from .exceptions import DatasetValidationError
 from .schemas import TrainRequest
 from .utils import (
-    SBERTTrainingEngine,
+    AsyncSBERTTrainingEngine,
     TrainingDataPreparer,
     TrainingDatabaseManager,
     TrainingDatasetValidator,
@@ -81,39 +83,23 @@ class TrainingOrchestrator:
         )
 
         try:
-            self.model = load_and_prepare_model(model_path)
+            loop = asyncio.get_running_loop()
 
-            train_dataloader, _ = (
-                TrainingDataPreparer.prepare_training_data(
+            # Model loading in executor
+            self.model = await loop.run_in_executor(None, load_and_prepare_model, model_path)
+
+            # Data preparation in executor
+            def prepare_data():
+                return TrainingDataPreparer.prepare_training_data(
                     dataset_paths, train_request.per_device_train_batch_size
                 )
-            )
+            train_dataloader, _ = await loop.run_in_executor(None, prepare_data)
 
-            JSONL_SUFFIX = '.jsonl'
+            # Dataset ID extraction and updating
+            await self._update_dataset_ids(dataset_paths)
 
-            def extract_id(filename: str) -> str | None:
-                if '_' in filename and filename.endswith(JSONL_SUFFIX):
-                    return filename.rsplit('_', 1)[-1].replace(JSONL_SUFFIX, '')
-                return None
-
-            import os
-            if len(dataset_paths) == 1:
-                train_file = os.path.basename(str(dataset_paths[0]))
-                train_id = extract_id(train_file)
-                await self.db_manager.update_dataset_ids([train_id] if train_id else [], val_dataset_id=None)
-            else:
-                train_ids = []
-                for path in dataset_paths[:-1]:
-                    file = os.path.basename(str(path))
-                    tid = extract_id(file)
-                    if tid:
-                        train_ids.append(tid)
-                val_file = os.path.basename(str(dataset_paths[-1]))
-                val_id = extract_id(val_file)
-                await self.db_manager.update_dataset_ids(train_ids, val_dataset_id=val_id)
-
-            training_engine = SBERTTrainingEngine(self.model)
-            training_metrics = training_engine.train_model(
+            # Training in executor with periodic yielding
+            training_metrics = await self._train_with_yielding(
                 train_dataloader, train_request, output_dir
             )
 
@@ -131,6 +117,45 @@ class TrainingOrchestrator:
             await self.db_manager.handle_training_error(exc)
         finally:
             self._cleanup_resources()
+
+    async def _update_dataset_ids(self, dataset_paths: list[str]) -> None:
+        """Extract and update dataset IDs from file paths."""
+        import os
+
+        JSONL_SUFFIX = '.jsonl'
+
+        def extract_id(filename: str) -> str | None:
+            if '_' in filename and filename.endswith(JSONL_SUFFIX):
+                return filename.rsplit('_', 1)[-1].replace(JSONL_SUFFIX, '')
+            return None
+
+        if len(dataset_paths) == 1:
+            train_file = os.path.basename(str(dataset_paths[0]))
+            train_id = extract_id(train_file)
+            await self.db_manager.update_dataset_ids([train_id] if train_id else [], val_dataset_id=None)
+        else:
+            train_ids = []
+            for path in dataset_paths[:-1]:
+                file = os.path.basename(str(path))
+                tid = extract_id(file)
+                if tid:
+                    train_ids.append(tid)
+            val_file = os.path.basename(str(dataset_paths[-1]))
+            val_id = extract_id(val_file)
+            await self.db_manager.update_dataset_ids(train_ids, val_dataset_id=val_id)
+
+    async def _train_with_yielding(
+        self, train_dataloader, train_request, output_dir: str
+    ):
+        """Train model with async yielding to allow other tasks."""
+        if self.model is None:
+            raise RuntimeError("Model was not loaded correctly.")
+
+        # Use the new async training engine
+        async_training_engine = AsyncSBERTTrainingEngine(self.model)
+        return await async_training_engine.train_model_async(
+            train_dataloader, train_request, output_dir, yield_interval_steps=50
+        )
 
     def _cleanup_resources(self) -> None:
         """Clean up resources after training."""

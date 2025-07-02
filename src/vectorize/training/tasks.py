@@ -14,7 +14,7 @@ from .service import TrainingOrchestrator
 __all__ = ["run_training_bg"]
 
 
-@dramatiq.actor(max_retries=3)
+@dramatiq.actor(max_retries=3, queue_name="training")
 async def run_training_bg(
     model_path: str,
     train_request_dict: dict,

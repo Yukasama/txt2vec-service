@@ -1,5 +1,6 @@
 """Training utilities for SBERT model training."""
 
+from .async_training_engine import AsyncSBERTTrainingEngine
 from .cleanup import cleanup_resources
 from .data_preparer import TrainingDataPreparer
 from .dataset_validator import TrainingDatasetValidator
@@ -10,6 +11,7 @@ from .training_database_manager import TrainingDatabaseManager
 from .training_engine import SBERTTrainingEngine
 
 __all__ = [
+    "AsyncSBERTTrainingEngine",
     "InputExampleDataset",
     "SBERTTrainingEngine",
     "TrainingDataPreparer",
