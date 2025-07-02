@@ -61,9 +61,9 @@ async def get_ai_models(
     return response
 
 
-@router.get("/{ai_model_tag}", response_model=None, summary="Get AIModel by tag")
+@router.get("/{ai_model_identifier}", response_model=None, summary="Get AIModel by tag")
 async def get_ai_model(
-    ai_model_tag: str,
+    ai_model_identifier: str,
     request: Request,
     response: Response,
     db: Annotated[AsyncSession, Depends(get_session)],
@@ -71,7 +71,7 @@ async def get_ai_model(
     """Retrieve a single AI model by its ID.
 
     Args:
-        ai_model_tag: The tag of the AI model to retrieve
+        ai_model_identifier: The tag or ID of the AI model to retrieve
         request: The HTTP request object
         response: FastAPI response object for setting headers
         db: Database session for persistence operations
@@ -82,18 +82,24 @@ async def get_ai_model(
     Raises:
         ModelNotFoundError: If the AI model with the specified ID doesn't exist
     """
-    ai_model, version = await get_ai_model_svc(db, ai_model_tag)
+    ai_model, version = await get_ai_model_svc(db, ai_model_identifier)
     response.headers["ETag"] = f'"{version}"'
     etag = f'"{version}"'
 
     client_match = request.headers.get("If-None-Match")
     if client_match and client_match.strip('"') == str(version):
-        logger.debug("AIModel not modified", ai_model_tag=ai_model_tag, version=version)
+        logger.debug(
+            "AIModel not modified",
+            ai_model_identifier=ai_model_identifier,
+            version=version,
+        )
         return Response(
             status_code=status.HTTP_304_NOT_MODIFIED, headers={"ETag": etag}
         )
 
-    logger.debug("AIModel retrieved", ai_model_tag=ai_model_tag, version=version)
+    logger.debug(
+        "AIModel retrieved", ai_model_identifier=ai_model_identifier, version=version
+    )
     return ai_model
 
 

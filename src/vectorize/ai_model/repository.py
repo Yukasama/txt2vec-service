@@ -2,6 +2,7 @@
 
 from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from loguru import logger
@@ -14,6 +15,10 @@ from vectorize.config import settings
 from .exceptions import ModelNotFoundError
 from .models import AIModel, AIModelUpdate
 from .utils.model_deletion import remove_model_from_memory
+
+if TYPE_CHECKING:
+    from vectorize.inference.models import InferenceCounter
+
 
 __all__ = [
     "delete_model_db",
@@ -43,33 +48,32 @@ async def get_models_paged_db(
     Raises:
         NoModelFoundError: If there are no models in the database.
     """
-    from vectorize.inference.models import InferenceCounter  # noqa: PLC0415
     page = max(1, page)
     size = max(1, size)
     cutoff_date = datetime.now(UTC) - timedelta(days=settings.model_inference_limiter)
     offset = (page - 1) * size
 
     statement = (
-            select(
-                AIModel,
-                func.count(InferenceCounter.id).label("inference_count")  # type: ignore[reportArgumentType]
-            )
-            .join(
-                InferenceCounter,
-                onclause=and_(  # type: ignore[reportArgumentType]
-                    AIModel.id == InferenceCounter.ai_model_id,
-                    or_(
-                        InferenceCounter.created_at.is_(None),  # type: ignore[reportArgumentType]
-                        InferenceCounter.created_at >= cutoff_date
-                    )
-                ),
-                isouter=True
-            )
-            .group_by(AIModel.id)  # type: ignore[reportArgumentType]
-            .order_by(func.count(InferenceCounter.id).desc())  # type: ignore[reportArgumentType]
-            .offset(offset)
-            .limit(size)
+        select(
+            AIModel,
+            func.count(InferenceCounter.id).label("inference_count"),  # type: ignore[reportArgumentType]
         )
+        .join(
+            InferenceCounter,
+            onclause=and_(  # type: ignore[reportArgumentType]
+                AIModel.id == InferenceCounter.ai_model_id,
+                or_(
+                    InferenceCounter.created_at.is_(None),  # type: ignore[reportArgumentType]
+                    InferenceCounter.created_at >= cutoff_date,
+                ),
+            ),
+            isouter=True,
+        )
+        .group_by(AIModel.id)  # type: ignore[reportArgumentType]
+        .order_by(func.count(InferenceCounter.id).desc())  # type: ignore[reportArgumentType]
+        .offset(offset)
+        .limit(size)
+    )
 
     results = await db.exec(statement)
     models_with_counts = results.all()
@@ -85,10 +89,10 @@ async def get_models_paged_db(
                 AIModel.id == InferenceCounter.ai_model_id,
                 or_(
                     InferenceCounter.created_at.is_(None),  # type: ignore[reportArgumentType]
-                    InferenceCounter.created_at >= cutoff_date
-                )
+                    InferenceCounter.created_at >= cutoff_date,
+                ),
             ),
-            isouter=True
+            isouter=True,
         )
     )
     total_count = await db.scalar(total_count_stmt) or 0  # type: ignore[reportArgumentType]
@@ -99,25 +103,32 @@ async def get_models_paged_db(
     return models, total_count
 
 
-async def get_ai_model_db(db: AsyncSession, model_tag: str) -> AIModel:
-    """Retrieve an AI model by its ID.
+async def get_ai_model_db(db: AsyncSession, ai_model_identifier: str) -> AIModel:
+    """Retrieve an AI model by its ID or model tag.
 
     Args:
         db: Database session instance.
-        model_tag: The Tag of the model to retrieve.
+        ai_model_identifier: The ID or model tag of the model to retrieve.
 
     Returns:
-        AIModel: The AI model object corresponding to the given Model Tag.
+        AIModel: The AI model object corresponding to the given identifier.
 
     Raises:
         ModelNotFoundError: If the model is not found.
     """
-    statement = select(AIModel).where(AIModel.model_tag == model_tag)
+    try:
+        model_uuid = UUID(ai_model_identifier)
+        statement = select(AIModel).where(AIModel.id == model_uuid)
+        logger.debug("Searching AI Model by UUID", uuid=model_uuid)
+    except ValueError:
+        statement = select(AIModel).where(AIModel.model_tag == ai_model_identifier)
+        logger.debug("Searching AI Model by tag", tag=ai_model_identifier)
+
     result = await db.exec(statement)
     model = result.first()
 
     if model is None:
-        raise ModelNotFoundError(model_tag)
+        raise ModelNotFoundError(ai_model_identifier)
 
     logger.debug("AI Model loaded from DB", ai_model=model)
     return model

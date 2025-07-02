@@ -1,8 +1,6 @@
-
 # Installation Guide
 
 This guide will help you set up Vectorize for development or production use. Choose the method that best fits your needs.
-
 
 ## Quick Start
 
@@ -93,12 +91,12 @@ cp .env.example .env
 2. **Configure Environment**
 
 ```bash
-# Edit .env for Docker environment
+# Edit .env for Docker environment to your needs
 cat > .env << EOF
 ENV: production
 DATABASE_URL: sqlite+aiosqlite:///db/app.db
 REDIS_URL: redis://redis:6379
-UPLOAD_DIR: /app/data/datasets
+DATASETS_DIR: /app/data/datasets
 MODELS_DIR: /app/data/models
 DB_DIR: /app/db
 TZ: Europe/Berlin
@@ -114,6 +112,9 @@ EOF
 # Start all services (Note that the Frontend image has to be built before this step)
 docker compose up
 
+# Start without Grafana
+docker compose up vectorize vectorize_web dramatiq_worker redis caddy
+
 # Or run in background
 docker compose up -d
 
@@ -126,10 +127,9 @@ docker compose logs -f vectorize
 
 4. **Access the Application**
 
-- **API**: http://localhost:8000
-- **API Docs**: http://localhost:8000/docs
-- **Health Check**: http://localhost:8000/health
-
+- **API**: https://localhost/v1/api
+- **API Docs**: https://localhost/v1/api/docs
+- **Health Check**: https://localhost/v1/api/health
 
 ## Environment Configuration
 
@@ -151,17 +151,7 @@ LOG_LEVEL=DEBUG|INFO|WARNING|ERROR|CRITICAL
 CLEAR_DB_ON_RESTART=true    # Reset DB on startup (dev only)
 ```
 
-### Optional Configuration
-
-```bash
-# Directory Overrides
-UPLOAD_DIR=/custom/path/datasets
-MODELS_DIR=/custom/path/models
-LOG_DIR=/custom/path/logs
-```
-
 For complete configuration options, see the [Configuration Guide](configuration.md).
-
 
 ## Running Vectorize
 
@@ -193,7 +183,7 @@ ENV=production uv run uvicorn vectorize.app:app --host 0.0.0.0 --port 8000 --wor
 
 ### Background Services
 
-For full functionality, you'll need these services:
+For full functionality, you'll need these Backend services:
 
 ```bash
 # Start all services with Docker
@@ -206,38 +196,14 @@ docker compose up -d dramatiq_worker  # Background worker
 docker compose up -d caddy        # Reverse proxy
 ```
 
-
 ## Verification and Testing
-
-### Health Checks
-
-```bash
-# Application health
-curl http://localhost:8000/health
-# Expected: {"status": "healthy"}
-
-# Database connectivity
-curl http://localhost:8000/health/database
-# Expected: {"database": "connected"}
-
-# Background tasks
-curl http://localhost:8000/health/tasks
-# Expected: {"tasks": "running"}
-```
 
 ### Running Tests
 
 ```bash
-# Run all tests
+# Run all tests (coverage enabled by default)
 uv run pytest
-
-# Run with coverage report
-uv run pytest --cov=src/vectorize --cov-report=html
-
-# Run specific test categories
-uv run pytest -m "not slow"        # Skip slow tests
-uv run pytest tests/unit/          # Unit tests only
-uv run pytest tests/integration/   # Integration tests only
+# Note: On some systems, we experienced timeout errors regarding "dataset_hf" tests
 
 # Load testing with Locust
 uvx locust -f scripts/locust.py --host http://localhost:8000
@@ -247,18 +213,17 @@ uvx locust -f scripts/locust.py --host http://localhost:8000
 
 ```bash
 # List available endpoints
-curl http://localhost:8000/
+curl https://localhost/v1/api/docs
 
 # Get models
-curl http://localhost:8000/models
+curl https://localhost/v1/api/models
 
 # Get datasets
-curl http://localhost:8000/datasets
+curl https://localhost/v1/api/datasets
 
 # Get background tasks
-curl http://localhost:8000/tasks
+curl https://localhost/v1/api/tasks
 ```
-
 
 ## Development Tools Setup
 
@@ -290,7 +255,6 @@ uv run pre-commit install
 # Run hooks manually
 uv run pre-commit run --all-files
 ```
-
 
 ## Troubleshooting
 
@@ -348,7 +312,6 @@ docker system prune -a
 # Or use smaller models for development
 ```
 
-
 ### Getting Help
 
 - **Documentation**: Check other docs in this directory
@@ -365,7 +328,6 @@ uv run snakeviz startup.prof
 # Monitor resource usage
 docker stats vectorize
 ```
-
 
 ## Next Steps
 

@@ -39,6 +39,25 @@ Currently, the API does not require authentication.
 - **Request**: `application/json`, `multipart/form-data` (for file uploads)
 - **Response**: `application/json` or an empty response
 
+### Error Handling
+
+The API uses standardized error codes defined in `config/errors.py` for consistent error handling across all endpoints. This helps differenciating errors easier in the Web application. Error responses follow this format:
+
+```json
+{
+  "code": "ERROR_CODE",
+  "message": "Human-readable error description"
+}
+```
+
+Common error codes include:
+
+- `SERVER_ERROR`: Internal server errors
+- `NOT_FOUND`: Resource not found
+- `INVALID_FILE`: File validation errors
+- `VERSION_MISMATCH`: ETag version conflicts
+- `MODEL_ALREADY_EXISTS`: Duplicate model creation attempts
+
 ### Common Response Codes
 
 - `200 OK`: Successful operation

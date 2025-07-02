@@ -15,7 +15,7 @@ __all__ = ["delete_model_svc", "get_ai_model_svc", "update_ai_model_svc"]
 
 
 async def get_ai_model_svc(
-    db: AsyncSession, ai_model_tag: str
+    db: AsyncSession, ai_model_identifier: str
 ) -> tuple[AIModelPublic, int]:
     """Read a single AI model from the database.
 
@@ -24,12 +24,12 @@ async def get_ai_model_svc(
 
     Args:
         db: Database session for persistence operations
-        ai_model_tag: The tag of the AI model to retrieve
+        ai_model_identifier: The tag or ID of the AI model to retrieve
 
     Returns:
         Dictionary representing the AI model with all fields.
     """
-    ai_model = await get_ai_model_db(db, ai_model_tag)
+    ai_model = await get_ai_model_db(db, ai_model_identifier)
     return AIModelPublic.model_validate(ai_model), ai_model.version
 
 

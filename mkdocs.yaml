@@ -79,6 +79,9 @@ nav:
       - Configuration: configuration.md
       - Monitoring with Grafana: grafana.md
       - Run local CI with Act: act.md
+      - Technicals:
+        - Database: database.md
+        - Logging: logging.md
   - User Guides:
       - Datasets: guides/datasets.md
       - AI Models: guides/models.md
