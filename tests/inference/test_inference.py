@@ -49,7 +49,6 @@ class TestEmbeddings:
         """Test basic embedding generation with a simple input."""
         payload = {"model": _MODEL_NAME, "input": "This is a test sentence."}
 
-        # Check inference counter
         counter_response = client.get(f"/embeddings/counter/{_MODEL_NAME}")
         assert counter_response.status_code == status.HTTP_200_OK
         first_key = next(iter(counter_response.json()))
@@ -57,26 +56,22 @@ class TestEmbeddings:
 
         response = await self._get_embeddings(client, payload)
 
-        # Verify core response structure
         assert response["object"] == "list"
         assert response["model"] == _MODEL_NAME
         assert "data" in response
         assert len(response["data"]) == 1
 
-        # Check embedding structure
         embedding_data = response["data"][0]
         assert "embedding" in embedding_data
         assert "index" in embedding_data
         assert isinstance(embedding_data["embedding"], list)
         assert len(embedding_data["embedding"]) > 0
 
-        # Check usage statistics
         assert "usage" in response
         assert "prompt_tokens" in response["usage"]
         assert "total_tokens" in response["usage"]
         assert response["usage"]["prompt_tokens"] > 0
 
-        # Check inference counter
         counter_response = client.get(f"/embeddings/counter/{_MODEL_NAME}")
         assert counter_response.status_code == status.HTTP_200_OK
         first_key = next(iter(counter_response.json()))
@@ -196,5 +191,4 @@ class TestEmbeddings:
 
         if "data" in response:
             assert len(response["data"]) > 0
-            # The dimension should be capped at model's max dimension
             assert len(response["data"][0]["embedding"]) < _HUGE_DIMENSIONS

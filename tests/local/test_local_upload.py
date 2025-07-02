@@ -5,6 +5,7 @@
 from pathlib import Path
 from uuid import UUID
 
+import aiofiles
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
@@ -27,9 +28,10 @@ class TestZipModelUpload:
     _multiple_models_zip = _base_dir / "multiple_model.zip"
     _filtered_test_zip = _base_dir / "filtered_test_model.zip"
 
-    async def test_valid_zip_upload(self, client: TestClient) -> None:
+    @classmethod
+    async def test_valid_zip_upload(cls, client: TestClient) -> None:
         """Test uploading a valid ZIP file with model files."""
-        files = get_test_zip_file(TestZipModelUpload._valid_zip)
+        files = get_test_zip_file(cls._valid_zip)
 
         response = client.post(
             "/uploads/local", params={"model_name": "test_model"}, files=files
@@ -44,9 +46,9 @@ class TestZipModelUpload:
         except ValueError:
             assert model_id == "local_test_model"
 
-        model_dir = Path(self._upload_dir) / "local_test_model"
+        model_dir = Path(cls._upload_dir) / "local_test_model"
         assert model_dir.exists(), (
-            f"Model directory 'test_model' should exist in {self._upload_dir}"
+            f"Model directory 'test_model' should exist in {cls._upload_dir}"
         )
         assert model_dir.is_dir(), "Model path should be a directory"
 
@@ -58,8 +60,8 @@ class TestZipModelUpload:
         """Test uploading a file with an invalid extension."""
         invalid_file_path = TestZipModelUpload._base_dir / "invalid_file.txt"
         if not invalid_file_path.exists():
-            with invalid_file_path.open("w") as f:
-                f.write("This is not a ZIP file")
+            async with aiofiles.open(invalid_file_path, "w") as f:
+                await f.write("This is not a ZIP file")
 
         files = get_test_zip_file(invalid_file_path)
         response = client.post(

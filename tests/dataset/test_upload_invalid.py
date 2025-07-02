@@ -64,7 +64,7 @@ class TestInvalidDatasets:
             expected_code=ErrorCode.INVALID_CSV_FORMAT,
         )
 
-    async def test_zip_all_invalid_upload(self, client: TestClient) -> None:
+    async def test_zip_all_invalid_upload(self, client: TestClient) -> None:  # NOSONAR
         """Uploading a ZIP archive succeeds and returns 201."""
         file_path = self.invalid_dir / "invalid.zip"
 

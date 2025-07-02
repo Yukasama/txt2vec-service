@@ -120,6 +120,7 @@ markers = [
     "dataset_write: marks test as a dataset write test",
     "dataset_hf: marks test as a dataset huggingface test",
     "inference: marks test as an inference test",
+    "cache: marks test as cache related",
     "huggingface: marks test as a huggingface test",
     "github: marks test as a github test",
     "upload: mark test as upload related",

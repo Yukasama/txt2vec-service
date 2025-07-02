@@ -4,10 +4,25 @@ import zipfile
 from collections import defaultdict
 from pathlib import Path
 
-import torch
 from loguru import logger
 
 __all__ = ["get_toplevel_directories", "is_valid_zip", "validate_model_files"]
+
+_EXT_PT = ".pt"
+_EXT_PTH = ".pth"
+_EXT_BIN = ".bin"
+_EXT_MODEL = ".model"
+_EXT_SAFETENSORS = ".safetensors"
+
+_VALID_EXTENSIONS = {_EXT_PT, _EXT_PTH, _EXT_BIN, _EXT_MODEL, _EXT_SAFETENSORS}
+_MODEL_EXTS = (_EXT_PT, _EXT_PTH, _EXT_BIN, _EXT_MODEL, _EXT_SAFETENSORS)
+
+_MAX_FILE_SIZE = 50 * 1024 * 1024 * 1024
+_ZIP_SIGNATURES = (b"PK\x03\x04", b"PK\x05\x06")
+_PICKLE_PROTOCOL_MARKER = 0x80
+_PICKLE_PROTOCOLS = {2, 3, 4, 5}
+_MIN_HEADER_LENGTH = 2
+_SAFETENSORS_MIN_HEADER = 8
 
 
 def validate_model_files(extracted_files: list[Path]) -> bool:
@@ -19,17 +34,85 @@ def validate_model_files(extracted_files: list[Path]) -> bool:
     Returns:
         bool: True if at least one valid PyTorch model was found, False otherwise
     """
-    valid_extensions = {".pt", ".pth", ".bin", ".model", ".safetensors"}
-
     for file_path in extracted_files:
-        if file_path.suffix.lower() in valid_extensions:
-            try:
-                torch.load(file_path, map_location="cpu")  # NOSONAR
-                return True
-            except Exception:
-                logger.debug("Invalid PyTorch model: {}", file_path)
-                continue
+        if file_path.suffix.lower() in _VALID_EXTENSIONS and _is_valid_model_file(
+            file_path
+        ):
+            return True
+    return False
 
+
+def _is_valid_model_file(file_path: Path) -> bool:
+    """Check if a single file is a valid model file.
+
+    Args:
+        file_path: Path to the file to validate
+
+    Returns:
+        bool: True if file is a valid model, False otherwise
+    """
+    try:
+        stat = file_path.stat()
+        if not _is_valid_file_size(stat.st_size, file_path):
+            return False
+
+        suffix = file_path.suffix.lower()
+        return _validate_by_extension(file_path, suffix)
+
+    except Exception as e:
+        logger.debug("Error validating model file: {}, error: {}", file_path, e)
+        return False
+
+
+def _is_valid_file_size(size: int, file_path: Path) -> bool:
+    """Check if file size is valid."""
+    if size <= 0:
+        return False
+
+    if size > _MAX_FILE_SIZE:
+        logger.debug("Model file too large: {}, size: {} bytes", file_path, size)
+        return False
+
+    return True
+
+
+def _validate_by_extension(file_path: Path, suffix: str) -> bool:
+    """Validate file based on its extension."""
+    if suffix in {_EXT_PT, _EXT_PTH}:
+        return _validate_pytorch_file(file_path)
+    if suffix == _EXT_SAFETENSORS:
+        return _validate_safetensors_file(file_path)
+    return suffix in {_EXT_BIN, _EXT_MODEL}
+
+
+def _validate_pytorch_file(file_path: Path) -> bool:
+    """Validate PyTorch file format without deserialization."""
+    try:
+        with file_path.open("rb") as f:
+            header = f.read(8)
+            if header.startswith(_ZIP_SIGNATURES):
+                return True
+            if (
+                len(header) >= _MIN_HEADER_LENGTH
+                and header[0] == _PICKLE_PROTOCOL_MARKER
+                and header[1] in _PICKLE_PROTOCOLS
+            ):
+                return True
+    except Exception as e:
+        logger.debug("Error reading PyTorch file header: {}, error: {}", file_path, e)
+    return False
+
+
+def _validate_safetensors_file(file_path: Path) -> bool:
+    """Validate SafeTensors file format."""
+    try:
+        with file_path.open("rb") as f:
+            header = f.read(16)
+            return len(header) >= _SAFETENSORS_MIN_HEADER
+    except Exception as e:
+        logger.debug(
+            "Error reading SafeTensors file header: {}, error: {}", file_path, e
+        )
     return False
 
 
@@ -43,9 +126,6 @@ def is_valid_zip(file_path: Path) -> bool:
         bool: True if file is a valid ZIP archive, False otherwise
     """
     return zipfile.is_zipfile(file_path)
-
-
-_MODEL_EXTS = (".pt", ".pth", ".bin", ".model", ".safetensors")
 
 
 def get_toplevel_directories(zip_file: zipfile.ZipFile) -> dict[str, list[str]]:

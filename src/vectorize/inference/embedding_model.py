@@ -18,7 +18,7 @@ class EmbeddingData(BaseModel):
     """Data structure for each embedding that is generated."""
 
     object: Literal["embedding"]
-    embedding: list[float]
+    embedding: list[float] | str
     index: int
 
 

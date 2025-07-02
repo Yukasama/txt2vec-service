@@ -1,0 +1,1 @@
+"""Inference tests module."""

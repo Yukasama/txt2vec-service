@@ -4,7 +4,7 @@ import asyncio
 import shutil
 import zipfile
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 from fastapi import UploadFile
 from loguru import logger
@@ -20,6 +20,7 @@ from .exceptions import (
     NoValidModelsFoundError,
 )
 from .utils.zip_extractor import (
+    _is_safe_path,
     process_model_directory,
     process_single_model,
     save_zip_to_temp,
@@ -27,6 +28,14 @@ from .utils.zip_extractor import (
 from .utils.zip_validator import get_toplevel_directories, is_valid_zip
 
 __all__ = ["upload_zip_model"]
+
+
+class ProcessingConfig(NamedTuple):
+    """Configuration for ZIP model processing."""
+
+    base_name: str
+    base_dir: Path
+    multi_model: bool
 
 
 async def _process_directory(
@@ -43,6 +52,33 @@ async def _process_directory(
     return await process_model_directory(
         zip_ref, model_folder_name, dir_files, base_dir, db
     )
+
+
+MODEL_ALREADY_EXISTS_MSG = "Model '{}' already exists"
+
+
+def _handle_model_already_exists(dir_path: str, existing_models: list[str]) -> None:
+    """Handle ModelAlreadyExistsError for a directory."""
+    model_folder_name = dir_path.split("/", 1)[-1] if "/" in dir_path else dir_path
+    existing_models.append(model_folder_name)
+    logger.warning(MODEL_ALREADY_EXISTS_MSG, model_folder_name)
+
+
+def _handle_invalid_model_directory(
+    dir_path: str, base_dir: Path, e: NoValidModelsFoundError
+) -> None:
+    """Handle NoValidModelsFoundError for a directory."""
+    model_folder_name = dir_path.split("/", 1)[-1] if "/" in dir_path else dir_path
+    logger.warning("Skipping invalid model directory '{}': {}", dir_path, e)
+
+    sanitized_name = Path(model_folder_name).name
+    if not sanitized_name or sanitized_name in {".", ".."}:
+        logger.warning("Invalid model folder name: '{}'", model_folder_name)
+        return
+
+    model_path = base_dir / sanitized_name
+    if model_path.exists():
+        shutil.rmtree(model_path, ignore_errors=True)
 
 
 async def _process_directories(
@@ -70,21 +106,13 @@ async def _process_directories(
             model_dir, model_id = await _process_directory(
                 zip_ref, dir_path, dir_files, base_dir, db
             )
-
             processed_models.append((model_dir, model_id))
 
         except ModelAlreadyExistsError:
-            model_folder_name = dir_path.split("/")[-1] if "/" in dir_path else dir_path
-            existing_models.append(model_folder_name)
-            logger.warning("Model '{}' already exists", model_folder_name)
+            _handle_model_already_exists(dir_path, existing_models)
 
         except NoValidModelsFoundError as e:
-            model_folder_name = dir_path.split("/")[-1] if "/" in dir_path else dir_path
-            logger.warning("Skipping invalid model directory '{}': {}", dir_path, e)
-            model_path = base_dir / model_folder_name
-
-            if model_path.exists():
-                shutil.rmtree(model_path, ignore_errors=True)
+            _handle_invalid_model_directory(dir_path, base_dir, e)
 
     return processed_models, existing_models
 
@@ -110,7 +138,7 @@ async def _process_multi_model(
             processed_models.append(result)
         except ModelAlreadyExistsError:
             existing_models.append(base_name)
-            logger.warning("Model '{}' already exists", base_name)
+            logger.warning(MODEL_ALREADY_EXISTS_MSG, base_name)
 
         return processed_models, existing_models
 
@@ -149,7 +177,7 @@ def _handle_results(
     if not processed_models:
         if existing_models:
             msg = (
-                f"Model '{base_name}' already exists"
+                MODEL_ALREADY_EXISTS_MSG.format(base_name)
                 if not multi_model
                 else f"All models already exist: {', '.join(existing_models)}"
             )
@@ -176,6 +204,50 @@ def _handle_results(
     return result
 
 
+def _validate_upload_params(file: UploadFile, model_name: str | None) -> str:
+    """Validate upload parameters and return base name."""
+    if not file.filename or not file.filename.lower().endswith(".zip"):
+        raise InvalidModelError("Only ZIP archives are supported")
+
+    base_name = "".join(
+        c if c.isalnum() else "_" for c in (model_name or Path(file.filename).stem)
+    ).strip("_")
+    base_dir = Path(settings.model_upload_dir).resolve()
+    if not base_name or not _is_safe_path(base_dir / base_name, base_dir):
+        raise InvalidModelError("Unsafe model name or path detected")
+
+    return base_name
+
+
+async def _process_zip_models(
+    zip_ref: zipfile.ZipFile,
+    file_list: list,
+    config: ProcessingConfig,
+    db: AsyncSession,
+) -> tuple[list[tuple[Path, str]], list[str]]:
+    """Process models from ZIP file."""
+    existing_models = []
+    processed_models = []
+
+    if config.multi_model:
+        processed_models, existing_models = await _process_multi_model(
+            zip_ref, file_list, config.base_name, config.base_dir, db
+        )
+    else:
+        try:
+            result = await process_single_model(
+                zip_ref, config.base_name, file_list, config.base_dir, db
+            )
+            processed_models.append(result)
+        except ModelAlreadyExistsError as err:
+            existing_models.append(config.base_name)
+            raise ModelAlreadyExistsError(
+                MODEL_ALREADY_EXISTS_MSG.format(config.base_name)
+            ) from err
+
+    return processed_models, existing_models
+
+
 async def upload_zip_model(
     file: UploadFile,
     model_name: str | None,
@@ -199,11 +271,8 @@ async def upload_zip_model(
         InvalidZipError: When the ZIP file is corrupted
         NoValidModelsFoundError: When no valid files were found
     """
-    if not file.filename or not file.filename.lower().endswith(".zip"):
-        raise InvalidModelError("Only ZIP archives are supported")
-
-    base_name = model_name or Path(file.filename).stem
-    base_dir = Path(settings.model_upload_dir)
+    base_name = _validate_upload_params(file, model_name)
+    base_dir = Path(settings.model_upload_dir).resolve()
     temp_path = None
     processed_models = []
 
@@ -220,23 +289,10 @@ async def upload_zip_model(
             if not file_list:
                 raise EmptyModelError("ZIP archive is empty")
 
-            existing_models = []
-
-            if multi_model:
-                processed_models, existing_models = await _process_multi_model(
-                    zip_ref, file_list, base_name, base_dir, db
-                )
-            else:
-                try:
-                    result = await process_single_model(
-                        zip_ref, base_name, file_list, base_dir, db
-                    )
-                    processed_models.append(result)
-                except ModelAlreadyExistsError as err:
-                    existing_models.append(base_name)
-                    raise ModelAlreadyExistsError(
-                        f"Model '{base_name}' already exists"
-                    ) from err
+            config = ProcessingConfig(base_name, base_dir, multi_model)
+            processed_models, existing_models = await _process_zip_models(
+                zip_ref, file_list, config, db
+            )
 
         return _handle_results(
             processed_models, existing_models, base_name, multi_model

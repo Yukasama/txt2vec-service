@@ -87,6 +87,11 @@ inference_limiter = 30
 [app.inference]
 device = "cpu"
 
+[app.cache]
+strategy = "fixed_size"
+max_models = 5
+vram_safety_margin_gb = 1.0
+
 [app.evaluation]
 default_max_samples = 1000
 default_random_seed = 42

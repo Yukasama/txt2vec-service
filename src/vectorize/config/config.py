@@ -21,6 +21,7 @@ with Path.open(_app_config_path, "rb") as f:
     _model_config = _app_config.get("model", {})
     _dataset_config = _app_config.get("dataset", {})
     _inference_config = _app_config.get("inference", {})
+    _cache_config = _app_config.get("cache", {})
     _evaluation_config = _app_config.get("evaluation", {})
 
 
@@ -228,6 +229,21 @@ class Settings(BaseSettings):
     inference_device: Literal["cpu", "cuda"] = Field(
         default=_inference_config.get("device"),
         description="Device to use for model inference (CPU/GPU).",
+    )
+
+    cache_strategy: Literal["fixed_size", "vram_aware"] = Field(
+        default=_cache_config.get("strategy", "fixed_size"),
+        description="Cache strategy: fixed_size or vram_aware",
+    )
+
+    cache_max_models: int = Field(
+        default=_cache_config.get("max_models", 5),
+        description="Maximum number of models in cache (fixed_size strategy)",
+    )
+
+    cache_vram_safety_margin_gb: float = Field(
+        default=_cache_config.get("vram_safety_margin_gb", 1.0),
+        description="VRAM safety margin in GB (vram_aware strategy)",
     )
 
     # Evaluation configuration

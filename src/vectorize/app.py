@@ -13,6 +13,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from vectorize.config import config_logger, engine, seed_db, settings
 from vectorize.utils.banner import create_banner
+from vectorize.utils.cache import initialize_cache
 from vectorize.utils.error_handler import register_exception_handlers
 from vectorize.utils.prometheus import add_prometheus_metrics
 from vectorize.utils.routers import register_routers
@@ -36,6 +37,8 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None]:
     if settings.seed_db_on_start:
         async with AsyncSession(engine) as session:
             await seed_db(session)
+
+    await initialize_cache(max_preload=3)
 
     yield
     await engine.dispose()

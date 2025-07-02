@@ -287,7 +287,7 @@ async def seed_db(session: AsyncSession) -> None:
             task_status=TaskStatus.RUNNING,
             created_at=datetime.now(tz=UTC) - timedelta(minutes=30),
             model_id=AI_MODEL_LOCALTRAINMODEL_ID,
-            model_tag="Evaluation Model"
+            model_tag="Evaluation Model",
         ),
     )
 
