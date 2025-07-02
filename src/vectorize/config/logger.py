@@ -31,18 +31,18 @@ def config_logger() -> None:
 
     logger.remove()
 
-    if not is_production:
-        logger.add(
-            settings.log_path,
-            rotation=settings.log_rotation,
-            format=_development_format,
-            enqueue=True,
-            backtrace=False,
-            diagnose=False,
-            compression="zip",
-            colorize=False,
-            level=logging.DEBUG,
-        )
+    # if not is_production:
+    #     logger.add(
+    #         settings.log_path,
+    #         rotation=settings.log_rotation,
+    #         format=_development_format,
+    #         enqueue=True,
+    #         backtrace=False,
+    #         diagnose=False,
+    #         compression="zip",
+    #         colorize=False,
+    #         level=logging.DEBUG,
+    #     )
 
     logger.add(
         sys.stderr if is_production else sys.stdout,

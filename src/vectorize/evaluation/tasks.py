@@ -33,6 +33,10 @@ async def _run_baseline_evaluation(
     dataset_path: Path,
 ) -> None:
     """Run evaluation with baseline comparison."""
+    import asyncio
+    import concurrent.futures
+    import time
+    
     if not evaluation_request.baseline_model_tag:
         raise ValueError("Baseline model tag is required for comparison evaluation")
 
@@ -86,6 +90,10 @@ async def _run_simple_evaluation(
     dataset_path: Path,
 ) -> None:
     """Run simple evaluation without baseline."""
+    import asyncio
+    import concurrent.futures
+    import time
+    
     await db_manager.update_task_status(TaskStatus.RUNNING, progress=0.5)
 
     def evaluate_in_thread() -> dict:
