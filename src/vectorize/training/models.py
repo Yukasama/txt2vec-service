@@ -16,11 +16,6 @@ __all__ = ["TrainingTask"]
 
 
 class TrainingTask(SQLModel, table=True):
-
-    baseline_model_id: str | None = Field(
-        default=None,
-        description="ID of the baseline model used for training."
-    )
     """Model training task."""
 
     __tablename__ = "training_task"
@@ -54,6 +49,10 @@ class TrainingTask(SQLModel, table=True):
 
     trained_model: Optional["AIModel"] = Relationship(back_populates="training_tasks")
 
+    baseline_model_id: str | None = Field(
+        default=None, description="ID of the baseline model used for training."
+    )
+
     created_at: datetime = Field(
         sa_column=Column(DateTime(timezone=True), insert_default=func.now()),
         description="Timestamp when the training task was created.",
@@ -69,12 +68,11 @@ class TrainingTask(SQLModel, table=True):
     train_dataset_ids: list[str] | None = Field(
         default=None,
         description="List of training dataset IDs used for training.",
-        sa_column=Column(JSON)
+        sa_column=Column(JSON),
     )
 
     val_dataset_id: str | None = Field(
-        default=None,
-        description="ID of the validation dataset used during training."
+        default=None, description="ID of the validation dataset used during training."
     )
 
     train_runtime: float | None = Field(
