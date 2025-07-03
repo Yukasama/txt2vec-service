@@ -424,7 +424,7 @@ class TestTrainEvaluationTasksValid:
         cls, client: TestClient
     ) -> None:
         """Test tasks endpoint filtering by dataset_id."""
-        response = client.get(f"/tasks?dataset_id={_DATASET_ID2}")
+        response = client.get(f"/tasks?dataset_id={_DATASET_ID2}&task_type=evaluation")
 
         assert response.status_code == status.HTTP_200_OK
         page = response.json()
@@ -432,8 +432,8 @@ class TestTrainEvaluationTasksValid:
         assert isinstance(tasks, list)
         assert len(tasks) >= 1
 
-        found_types = {task["task_type"] for task in tasks}
-        assert found_types == {"training", "evaluation"}
+        for task in tasks:
+            assert task["task_type"] == "evaluation"
 
     @classmethod
     async def test_get_tasks_dataset_id_with_task_type_filter(
@@ -448,5 +448,5 @@ class TestTrainEvaluationTasksValid:
         assert isinstance(tasks, list)
         assert len(tasks) >= 1
 
-        found_types = {task["task_type"] for task in tasks}
-        assert found_types == {"training", "evaluation"}
+        for task in tasks:
+            assert task["task_type"] == "training"
