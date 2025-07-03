@@ -1,9 +1,16 @@
 """Orchestrates the end-to-end SBERT training process."""
 
+import asyncio
+import concurrent.futures
+import time
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from loguru import logger
 from sqlmodel.ext.asyncio.session import AsyncSession
+
+if TYPE_CHECKING:
+    from torch.utils.data import DataLoader
 
 from .exceptions import DatasetValidationError
 from .schemas import TrainRequest
@@ -81,18 +88,25 @@ class TrainingOrchestrator:
         )
 
         try:
-            self.model = load_and_prepare_model(model_path)
+            loop = asyncio.get_running_loop()
 
-            train_dataloader, validation_dataset_path = (
-                TrainingDataPreparer.prepare_training_data(
-                    dataset_paths, train_request.per_device_train_batch_size
-                )
+            # Model loading in executor
+            self.model = await loop.run_in_executor(
+                None, load_and_prepare_model, model_path
             )
 
-            await self.db_manager.update_validation_dataset(validation_dataset_path)
+            # Data preparation in executor
+            def prepare_data() -> tuple:
+                return TrainingDataPreparer.prepare_training_data(
+                    dataset_paths, train_request.per_device_train_batch_size
+                )
+            train_dataloader, _ = await loop.run_in_executor(None, prepare_data)
 
-            training_engine = SBERTTrainingEngine(self.model)
-            training_metrics = training_engine.train_model(
+            # Update dataset IDs with the correct values from train_request
+            await self._update_dataset_ids_from_request(train_request)
+
+            # Training in executor with periodic yielding
+            training_metrics = await self._train_with_yielding(
                 train_dataloader, train_request, output_dir
             )
 
@@ -110,6 +124,73 @@ class TrainingOrchestrator:
             await self.db_manager.handle_training_error(exc)
         finally:
             self._cleanup_resources()
+
+    async def _update_dataset_ids_from_request(
+        self, train_request: TrainRequest
+    ) -> None:
+        """Update dataset IDs using the correct values from the training request.
+
+        Args:
+            train_request: Training request containing the actual dataset IDs
+        """
+        await self.db_manager.update_dataset_ids(
+            train_request.train_dataset_ids,
+            val_dataset_id=train_request.val_dataset_id
+        )
+
+        logger.debug(
+            "Updated training task with correct dataset IDs from request",
+            task_id=str(self.task_id),
+            train_dataset_ids=train_request.train_dataset_ids,
+            val_dataset_id=train_request.val_dataset_id,
+        )
+
+    async def _train_with_yielding(
+        self,
+        train_dataloader: "DataLoader",
+        train_request: TrainRequest,
+        output_dir: str,
+    ) -> dict:
+        """Train model with yielding to prevent blocking other workers."""
+        if self.model is None:
+            raise RuntimeError("Model was not loaded correctly.")
+
+        # Use ThreadPoolExecutor with yielding - simpler and more reliable
+
+        def train_in_thread() -> dict:
+            """Run training in thread with periodic status updates."""
+            try:
+                if self.model is None:
+                    raise RuntimeError("Model was not loaded correctly.")
+                training_engine = SBERTTrainingEngine(self.model)
+                return training_engine.train_model(
+                    train_dataloader, train_request, output_dir
+                )
+            except Exception as e:
+                logger.error(
+                    "Training failed in thread",
+                    error=str(e),
+                    task_id=str(self.task_id)
+                )
+                raise
+
+        # Submit to thread pool
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(train_in_thread)
+
+            start_time = time.time()
+            # Yield control every 3 seconds while training runs
+            while not future.done():
+                await asyncio.sleep(3)
+                elapsed = time.time() - start_time
+                logger.debug(
+                    "Training in progress...",
+                    task_id=str(self.task_id),
+                    elapsed_minutes=round(elapsed / 60, 1)
+                )
+
+            # Get result or raise exception
+            return future.result()
 
     def _cleanup_resources(self) -> None:
         """Clean up resources after training."""

@@ -20,8 +20,8 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from vectorize.common.exceptions import InvalidFileError
 from vectorize.config.db import get_session
 
+from ..utils.pagination import Page
 from .models import DatasetAll, DatasetPublic, DatasetUpdate
-from .pagination import Page
 from .schemas import DatasetUploadOptions, HuggingFaceDatasetRequest
 from .service import (
     delete_dataset_svc,

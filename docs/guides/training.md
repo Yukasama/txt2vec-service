@@ -1,5 +1,4 @@
-
-# Training Module
+# Training Guide
 
 This module contains all logic for training SBERT models (Sentence-BERT), including data validation, training orchestration, error handling, and utilities for REST API integration.
 

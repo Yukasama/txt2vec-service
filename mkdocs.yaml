@@ -80,39 +80,40 @@ nav:
       - Monitoring with Grafana: grafana.md
       - Run local CI with Act: act.md
       - Technicals:
-        - Database: database.md
-        - Logging: logging.md
+          - Database: database.md
+          - Logging: logging.md
   - User Guides:
-      - Datasets: guides/datasets.md
       - AI Models: guides/models.md
-      - Inference: guides/inference.md
-      - Upload: guides/upload.md
-      - Synthesis: guides/synthesis.md
-      - Training: guides/training.md
+      - Datasets: guides/datasets.md
       - Evaluation: guides/evaluation.md
+      - Inference: guides/inference.md
+      - Synthetic Generation: guides/synthesis.md
       - Tasks: guides/tasks.md
+      - Training: guides/training.md
+      - Upload: guides/upload.md
   - API Reference:
       - Overview: api.md
       - Endpoints:
           - Common/Health: api/common.md
-          - Datasets: api/datasets.md
           - AI Models: api/models.md
-          - Training: api/training.md
+          - Datasets: api/datasets.md
           - Evaluation: api/evaluation.md
           - Inference: api/inference.md
-          - Upload: api/upload.md
-          - Synthesis: api/synthesis.md
+          - Synthetic Generation: api/synthesis.md
           - Tasks: api/tasks.md
+          - Training: api/training.md
+          - Upload: api/upload.md
   - Architecture:
       - API Endpoints: diagrams/api-endpoints.md
       - Entity Relationship: diagrams/entity-relation.md
   - Use Cases:
+      - AI Models: diagrams/use-cases-models.md
       - Datasets: diagrams/use-cases-datasets.md
-      - Model Upload: diagrams/use-cases-upload.md
-      - Embeddings: diagrams/use-cases-embeddings.md
-      - Synthetic Generation: diagrams/use-cases-generation.md
-      - Training: diagrams/use-cases-training.md
       - Evaluation: diagrams/use-cases-evaluation.md
+      - Inference: diagrams/use-cases-inference.md
+      - Synthetic Generation: diagrams/use-cases-synthesis.md
       - Tasks: diagrams/use-cases-tasks.md
+      - Training: diagrams/use-cases-training.md
+      - Upload: diagrams/use-cases-upload.md
   - About:
       - Contributors: contributors.md

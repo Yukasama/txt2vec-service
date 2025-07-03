@@ -5,7 +5,10 @@ from fastapi import status
 from vectorize.common.app_error import AppError
 from vectorize.config.errors import ErrorCode
 
-__all__ = ["EvaluationModelNotFoundError", "EvaluationTaskNotFoundError"]
+__all__ = [
+    "EvaluationModelNotFoundError",
+    "EvaluationTaskNotFoundError",
+]
 
 
 class EvaluationModelNotFoundError(AppError):

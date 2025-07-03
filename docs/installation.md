@@ -113,7 +113,7 @@ EOF
 docker compose up
 
 # Start without Grafana
-docker compose up vectorize vectorize_web dramatiq_worker redis caddy
+docker compose up vectorize vectorize_web dramatiq_worker dramatiq_training_worker dramatiq_evaluation_worker redis caddy
 
 # Or run in background
 docker compose up -d
@@ -187,12 +187,14 @@ For full functionality, you'll need these Backend services:
 
 ```bash
 # Start all services with Docker
-docker compose up vectorize dramatiq_worker redis caddy
+docker compose up vectorize vectorize_web dramatiq_worker dramatiq_training_worker dramatiq_evaluation_worker redis caddy
 
 # Or individually
 docker compose up -d redis        # Task queue
 docker compose up -d vectorize    # Main application
 docker compose up -d dramatiq_worker  # Background worker
+docker compose up -d dramatiq_training_worker  # Background training worker
+docker compose up -d dramatiq_evaluation_worker  # Background evaluation worker
 docker compose up -d caddy        # Reverse proxy
 ```
 

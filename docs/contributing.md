@@ -140,7 +140,7 @@ uv run app
 uv run uvicorn vectorize.app:app --reload
 
 # With Docker
-docker compose up vectorize dramatiq_worker redis caddy
+docker compose up vectorize dramatiq_worker dramatiq_training_worker dramatiq_evaluation_worker redis caddy
 ```
 
 ### Load Testing

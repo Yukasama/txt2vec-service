@@ -121,7 +121,7 @@ class SBERTTrainingEngine:
                         parsed_metrics = ast.literal_eval(dict_str)
                         if isinstance(parsed_metrics, dict):
                             captured_metrics.update(parsed_metrics)
-                            logger.info(
+                            logger.debug(
                                 "Captured training metrics from print",
                                 **parsed_metrics,
                             )
@@ -167,7 +167,7 @@ class SBERTTrainingEngine:
         }
 
         if captured_metrics:
-            logger.info("Using captured training metrics", **captured_metrics)
+            logger.debug("Using captured training metrics", **captured_metrics)
         else:
             logger.debug(
                 "No metrics captured, using calculated values",

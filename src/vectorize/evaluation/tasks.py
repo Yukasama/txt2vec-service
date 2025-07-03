@@ -1,6 +1,9 @@
 """Evaluation tasks using Dramatiq for background processing."""
 
+import asyncio
+import concurrent.futures
 import json
+import time
 from pathlib import Path
 from uuid import UUID
 
@@ -10,8 +13,10 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from vectorize.config.db import engine
 from vectorize.evaluation.exceptions import EvaluationModelNotFoundError
+from vectorize.evaluation.repository import get_evaluation_task_by_id_db
 from vectorize.task.task_status import TaskStatus
 from vectorize.training.exceptions import TrainingDatasetNotFoundError
+from vectorize.training.repository import get_train_task_by_id_db
 
 from .schemas import EvaluationRequest
 from .utils import (
@@ -39,11 +44,30 @@ async def _run_baseline_evaluation(
 
     await db_manager.update_task_status(TaskStatus.RUNNING, progress=0.5)
 
-    trained_metrics_dict, baseline_metrics_dict = engine.get_comparison_metrics_dict(
-        dataset_path=dataset_path,
-        baseline_model_path=baseline_model_path,
-        max_samples=evaluation_request.max_samples,
-    )
+    def evaluate_in_thread() -> tuple[dict, dict]:
+        """Run baseline evaluation in thread."""
+        return engine.get_comparison_metrics_dict(
+            dataset_path=dataset_path,
+            baseline_model_path=baseline_model_path,
+            max_samples=evaluation_request.max_samples,
+        )
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(evaluate_in_thread)
+
+        start_time = time.time()
+        while not future.done():
+            await asyncio.sleep(3)  # Yield every 3 seconds
+            elapsed = time.time() - start_time
+            logger.debug(
+                "Baseline evaluation in progress...",
+                model_path=engine.model_path,
+                baseline_model=evaluation_request.baseline_model_tag,
+                elapsed_minutes=round(elapsed / 60, 1)
+            )
+
+        # Get result
+        trained_metrics_dict, baseline_metrics_dict = future.result()
 
     summary = engine.calculate_improvement_summary(
         trained_metrics_dict, baseline_metrics_dict
@@ -65,9 +89,28 @@ async def _run_simple_evaluation(
     """Run simple evaluation without baseline."""
     await db_manager.update_task_status(TaskStatus.RUNNING, progress=0.5)
 
-    metrics_dict = engine.get_simple_metrics_dict(
-        dataset_path, evaluation_request.max_samples
-    )
+    def evaluate_in_thread() -> dict:
+        """Run simple evaluation in thread."""
+        return engine.get_simple_metrics_dict(
+            dataset_path, evaluation_request.max_samples
+        )
+
+    # Run evaluation in thread pool with yielding
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(evaluate_in_thread)
+
+        start_time = time.time()
+        while not future.done():
+            await asyncio.sleep(3)  # Yield every 3 seconds
+            elapsed = time.time() - start_time
+            logger.debug(
+                "Simple evaluation in progress...",
+                model_path=engine.model_path,
+                elapsed_minutes=round(elapsed / 60, 1)
+            )
+
+        # Get result
+        metrics_dict = future.result()
 
     summary = engine.calculate_simple_summary(metrics_dict)
 
@@ -77,7 +120,58 @@ async def _run_simple_evaluation(
     )
 
 
-@dramatiq.actor(max_retries=3)
+async def _resolve_dataset_ids(
+    db: AsyncSession, evaluation_request: EvaluationRequest
+) -> list[str]:
+    """Resolve and return evaluation dataset IDs as a list of strings."""
+    evaluation_dataset_ids: list[str] = []
+
+    if evaluation_request.training_task_id:
+        train_task = await get_train_task_by_id_db(
+            db, UUID(evaluation_request.training_task_id)
+        )
+        if train_task and hasattr(train_task, "train_dataset_ids"):
+            evaluation_dataset_ids = [
+                str(x) for x in getattr(train_task, "train_dataset_ids", [])
+            ]
+    elif evaluation_request.dataset_id:
+        try:
+            evaluation_dataset_ids = [str(UUID(evaluation_request.dataset_id))]
+        except Exception:
+            evaluation_dataset_ids = []
+
+    return evaluation_dataset_ids
+
+
+async def _update_evaluation_task_with_dataset_ids(
+    db: AsyncSession, task_uuid: UUID, evaluation_dataset_ids: list[str]
+) -> None:
+    """Update evaluation task with resolved dataset IDs."""
+    eval_task = await get_evaluation_task_by_id_db(db, task_uuid)
+    if eval_task:
+        eval_task.evaluation_dataset_ids = evaluation_dataset_ids
+        db.add(eval_task)
+        await db.commit()
+
+
+async def _handle_evaluation_error(
+    db: AsyncSession,
+    task_id: str,
+    db_manager: EvaluationDatabaseManager | None,
+    error: Exception,
+) -> None:
+    """Handle evaluation errors by updating task status."""
+    try:
+        if db_manager is not None:
+            await db_manager.handle_evaluation_error(error)
+        else:
+            db_manager = EvaluationDatabaseManager(db, UUID(task_id))
+            await db_manager.handle_evaluation_error(error)
+    except Exception:
+        logger.error("Failed to update task status to FAILED", task_id=task_id)
+
+
+@dramatiq.actor(max_retries=3, queue_name="evaluation")
 async def run_evaluation_bg(
     evaluation_request_dict: dict,
     task_id: str,
@@ -114,17 +208,23 @@ async def run_evaluation_bg(
                 db, evaluation_request
             )
 
-            dataset_info = await EvaluationDatasetResolver.get_dataset_info(
-                db, evaluation_request
+            # Resolve and set dataset IDs
+            evaluation_dataset_ids = await _resolve_dataset_ids(db, evaluation_request)
+            await _update_evaluation_task_with_dataset_ids(
+                db, task_uuid, evaluation_dataset_ids
             )
 
             await db_manager.update_task_metadata(
                 model_tag=evaluation_request.model_tag,
-                dataset_info=dataset_info,
                 baseline_model_tag=evaluation_request.baseline_model_tag,
             )
 
-            engine_eval = EvaluationEngine(model_path)
+            loop = asyncio.get_running_loop()
+
+            def create_engine() -> EvaluationEngine:
+                return EvaluationEngine(model_path)
+
+            engine_eval = await loop.run_in_executor(None, create_engine)
 
             if evaluation_request.baseline_model_tag:
                 await _run_baseline_evaluation(
@@ -143,7 +243,10 @@ async def run_evaluation_bg(
                 model_tag=evaluation_request.model_tag,
             )
 
-        except (EvaluationModelNotFoundError, TrainingDatasetNotFoundError) as e:
+        except (
+            EvaluationModelNotFoundError,
+            TrainingDatasetNotFoundError,
+        ) as e:
             logger.error(
                 f"Evaluation failed: {e}",
                 task_id=task_id,
@@ -151,14 +254,7 @@ async def run_evaluation_bg(
                 error=str(e),
                 exc_info=False,
             )
-            try:
-                if db_manager is not None:
-                    await db_manager.handle_evaluation_error(e)
-                else:
-                    db_manager = EvaluationDatabaseManager(db, UUID(task_id))
-                    await db_manager.handle_evaluation_error(e)
-            except Exception:
-                logger.error("Failed to update task status to FAILED", task_id=task_id)
+            await _handle_evaluation_error(db, task_id, db_manager, e)
             return
         except Exception as e:
             logger.error(
@@ -168,12 +264,5 @@ async def run_evaluation_bg(
                 error=str(e),
                 exc_info=True,
             )
-            try:
-                if db_manager is not None:
-                    await db_manager.handle_evaluation_error(e)
-                else:
-                    db_manager = EvaluationDatabaseManager(db, UUID(task_id))
-                    await db_manager.handle_evaluation_error(e)
-            except Exception:
-                logger.error("Failed to update task status to FAILED", task_id=task_id)
+            await _handle_evaluation_error(db, task_id, db_manager, e)
             raise

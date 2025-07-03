@@ -13,9 +13,9 @@ from vectorize.task.task_status import TaskStatus
 
 from ..repository import (
     get_train_task_by_id_db,
+    update_training_task_dataset_ids_db,
     update_training_task_metrics_db,
     update_training_task_status_db,
-    update_training_task_validation_dataset_db,
 )
 from ..schemas import TrainRequest
 
@@ -32,25 +32,6 @@ class TrainingDatabaseManager:
         """
         self.db = db
         self.task_id = task_id
-
-    async def update_validation_dataset(
-        self, validation_dataset_path: str | None
-    ) -> None:
-        """Update the training task with the validation dataset path.
-
-        Args:
-            validation_dataset_path: Path to the validation dataset used during training
-        """
-        if validation_dataset_path:
-            await update_training_task_validation_dataset_db(
-                self.db, self.task_id, validation_dataset_path
-            )
-
-            logger.debug(
-                "Updated training task with validation dataset",
-                task_id=str(self.task_id),
-                validation_dataset_path=validation_dataset_path,
-            )
 
     async def save_training_metrics(self, training_metrics: dict) -> None:
         """Save training metrics to the database.
@@ -122,4 +103,26 @@ class TrainingDatabaseManager:
         logger.debug(
             "Training task marked as complete",
             task_id=str(self.task_id),
+        )
+
+    async def update_dataset_ids(
+        self,
+        train_dataset_ids: list[str],
+        val_dataset_id: str | None = None
+    ) -> None:
+        """Update the training task with dataset IDs.
+
+        Args:
+            train_dataset_ids: List of training dataset IDs
+            val_dataset_id: Optional validation dataset ID
+        """
+        await update_training_task_dataset_ids_db(
+            self.db, self.task_id, train_dataset_ids, val_dataset_id
+        )
+
+        logger.debug(
+            "Updated training task with dataset IDs",
+            task_id=str(self.task_id),
+            train_dataset_ids=train_dataset_ids,
+            val_dataset_id=val_dataset_id,
         )

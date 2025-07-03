@@ -1,4 +1,4 @@
-# Model Upload
+# Model Upload Guide
 
 This document provides an overview of the three primary endpoints for uploading AI models to the system, including usage instructions and a brief explanation of their internal processes. The endpoints support uploading models from Hugging Face, GitHub, and local ZIP archives.
 

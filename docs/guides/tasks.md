@@ -2,7 +2,6 @@
 
 The Tasks module provides centralized monitoring and management for all background operations in Vectorize. This unified interface allows you to track the status of uploads, training, evaluation, synthesis, and other asynchronous processes.
 
-
 ## What the Tasks Endpoint Can Do
 
 The `/tasks` endpoint serves as your central command center for monitoring all background operations:
@@ -20,7 +19,6 @@ The `/tasks` endpoint serves as your central command center for monitoring all b
 - **`evaluation`**: Model evaluation and benchmarking tasks
 - **`synthesis`**: Synthetic data generation operations
 
-
 ## Available Filters
 
 ### Core Filters
@@ -33,11 +31,13 @@ The `/tasks` endpoint serves as your central command center for monitoring all b
 
 ### Content Filters
 
-| Filter      | Type   | Description                   | Example Values                          |
-| ----------- | ------ | ----------------------------- | --------------------------------------- |
-| `task_type` | list   | Filter by specific task types | `model_upload`, `training`              |
-| `status`    | list   | Filter by task status         | `R` (running), `D` (done), `F` (failed) |
-| `tag`       | string | Filter by custom tag          | `my-model`, `experiment-1`              |
+| Filter        | Type   | Description                                 | Example Values                          |
+| ------------- | ------ | ------------------------------------------- | --------------------------------------- |
+| `task_type`   | list   | Filter by specific task types               | `model_upload`, `training`              |
+| `status`      | list   | Filter by task status                       | `R` (running), `D` (done), `F` (failed) |
+| `tag`         | string | Filter by custom tag                        | `my-model`, `experiment-1`              |
+| `baseline_id` | UUID   | Filter training tasks by baseline model     | `7d2f3e4b-8c7f-4d2a-9f1e-0a6f3e4d2a5b`  |
+| `dataset_id`  | UUID   | Filter training/evaluation tasks by dataset | `0a9d5e87-e497-4737-9829-2070780d10df`  |
 
 ### Status Codes
 
@@ -48,7 +48,6 @@ The `/tasks` endpoint serves as your central command center for monitoring all b
 | `D`  | DONE      | Task completed successfully      |
 | `F`  | FAILED    | Task failed with an error        |
 | `C`  | CANCELLED | Task was manually cancelled      |
-
 
 ## Usage Examples
 
@@ -65,8 +64,8 @@ import httpx
 
 async with httpx.AsyncClient() as client:
     response = await client.get("http://localhost:8000/tasks")
-    tasks = response.json()
-    print(f"Found {len(tasks)} recent tasks")
+    page = response.json()
+    print(f"Found {len(page['items'])} tasks (total: {page['total']})")
 ```
 
 ### Filter by Task Type
@@ -77,16 +76,6 @@ Get only training and evaluation tasks:
 curl "http://localhost:8000/tasks?task_type=training&task_type=evaluation"
 ```
 
-```python
-response = await client.get(
-    "http://localhost:8000/tasks",
-    params={
-        "task_type": ["training", "evaluation"],
-        "within_hours": 6
-    }
-)
-```
-
 ### Filter by Status
 
 Get only running tasks:
@@ -95,20 +84,18 @@ Get only running tasks:
 curl "http://localhost:8000/tasks?status=R"
 ```
 
-Check for failures in the last 24 hours:
+### Filter by Dataset or Baseline
 
-```python
-response = await client.get(
-    "http://localhost:8000/tasks",
-    params={
-        "status": ["F"],
-        "within_hours": 24
-    }
-)
+Get training tasks for a specific dataset:
 
-failed_tasks = response.json()
-if failed_tasks:
-    print(f"Found {len(failed_tasks)} failed tasks!")
+```bash
+curl "http://localhost:8000/tasks?dataset_id=0a9d5e87-e497-4737-9829-2070780d10df&task_type=training"
+```
+
+Get training tasks for a specific baseline model:
+
+```bash
+curl "http://localhost:8000/tasks?baseline_id=7d2f3e4b-8c7f-4d2a-9f1e-0a6f3e4d2a5b"
 ```
 
 ### Combined Filters
@@ -117,23 +104,6 @@ Complex filtering with multiple criteria:
 
 ```bash
 curl "http://localhost:8000/tasks?task_type=training&status=R&tag=experiment-1&limit=5"
-```
-
-```python
-response = await client.get(
-    "http://localhost:8000/tasks",
-    params={
-        "task_type": ["training", "evaluation"],
-        "status": ["Q", "R"],  # Queued or running
-        "tag": "production-model-v2",
-        "within_hours": 4,
-        "limit": 10
-    }
-)
-
-active_tasks = response.json()
-for task in active_tasks:
-    print(f"{task['task_type']}: {task['task_status']} ({task['tag']})")
 ```
 
 ### Pagination
@@ -146,19 +116,27 @@ curl "http://localhost:8000/tasks?limit=10&offset=0"
 curl "http://localhost:8000/tasks?limit=10&offset=10"
 ```
 
-
 ## Response Structure
 
-Each task in the response includes:
+The endpoint returns paginated results:
 
 ```json
 {
-  "id": "123e4567-e89b-12d3-a456-426614174000",
-  "task_type": "training",
-  "task_status": "R",
-  "tag": "my-experiment",
-  "created_at": "2024-01-15T10:30:00Z",
-  "end_date": null
+  "items": [
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "task_type": "training",
+      "task_status": "R",
+      "tag": "my-experiment",
+      "created_at": "2024-01-15T10:30:00Z",
+      "end_date": null,
+      "baseline_id": "7d2f3e4b-8c7f-4d2a-9f1e-0a6f3e4d2a5b",
+      "dataset_id": "0a9d5e87-e497-4737-9829-2070780d10df"
+    }
+  ],
+  "total": 150,
+  "limit": 100,
+  "offset": 0
 }
 ```
 
@@ -172,7 +150,8 @@ Each task in the response includes:
 | `tag`         | string   | Custom tag (may be null)                       |
 | `created_at`  | datetime | When the task was created                      |
 | `end_date`    | datetime | When the task finished (null if still running) |
-
+| `baseline_id` | UUID     | Baseline model ID (training tasks only)        |
+| `dataset_id`  | UUID     | Dataset ID (training/evaluation tasks only)    |
 
 ## How It Works Behind the Scenes
 
@@ -192,12 +171,13 @@ The tasks endpoint uses a query building system that aggregates data from multip
 
 4. **Sorting and Pagination**: Results are ordered by creation date (newest first) with pagination applied at the database level
 
-
 ## Best Practices
 
 - **Use appropriate time windows**: Don't fetch all historical tasks
 - **Apply status filters**: Focus on relevant task states (Q, R for active tasks)
-- **Set reasonable limits**: Use pagination for large result sets
+- **Set reasonable limits**: Use pagination for large result sets (default limit is 100)
+- **Handle pagination properly**: Check the `total` field to determine if more pages exist
+- **Use specific filters**: `baseline_id` and `dataset_id` filters help narrow down results for specific workflows
 - **Handle errors gracefully**: Check response status codes
 - **Cache results briefly**: Avoid repeated identical requests
 

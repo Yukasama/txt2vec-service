@@ -2,7 +2,6 @@
 
 from pydantic import BaseModel, Field
 
-from vectorize.task.task_status import TaskStatus
 from vectorize.training.models import TrainingTask
 
 
@@ -83,10 +82,14 @@ class TrainingStatusResponse(BaseModel):
     task_id: str
     status: str
     created_at: str | None = None
+    updated_at: str | None = None
     end_date: str | None = None
     error_msg: str | None = None
     trained_model_id: str | None = None
-    validation_dataset_path: str | None = None
+
+    train_dataset_ids: list[str] | None = None
+    val_dataset_id: str | None = None
+    baseline_model_id: str | None = None
 
     train_runtime: float | None = None
     train_samples_per_second: float | None = None
@@ -95,36 +98,27 @@ class TrainingStatusResponse(BaseModel):
     epoch: float | None = None
 
     @classmethod
-    def from_task(cls, task: TrainingTask) -> "TrainingStatusResponse":
-        """Create a TrainingStatusResponse from a TrainingTask object.
+    def from_training_task(cls, task: "TrainingTask") -> "TrainingStatusResponse":
+        """Create a TrainingStatusResponse from a TrainingTask object."""
+        # Convert TaskStatus enum to string
+        status_value = task.task_status.value if task.task_status else "F"
 
-        Args:
-            task: The TrainingTask instance.
-
-        Returns:
-            TrainingStatusResponse: The response object.
-        """
-        status = getattr(task, "task_status", None)
-        if isinstance(status, TaskStatus):
-            status_value = status.value
-        elif isinstance(status, str):
-            try:
-                status_value = TaskStatus[status.upper()].value
-            except Exception:
-                status_value = "F"
-        else:
-            status_value = "F"
         return cls(
             task_id=str(task.id),
             status=status_value,
-            created_at=str(getattr(task, "created_at", None)),
-            end_date=str(getattr(task, "end_date", None)),
-            error_msg=getattr(task, "error_msg", None),
-            trained_model_id=str(getattr(task, "trained_model_id", "")) or None,
-            validation_dataset_path=getattr(task, "validation_dataset_path", None),
-            train_runtime=getattr(task, "train_runtime", None),
-            train_samples_per_second=getattr(task, "train_samples_per_second", None),
-            train_steps_per_second=getattr(task, "train_steps_per_second", None),
-            train_loss=getattr(task, "train_loss", None),
-            epoch=getattr(task, "epoch", None),
+            created_at=str(task.created_at) if task.created_at else None,
+            updated_at=str(task.updated_at) if task.updated_at else None,
+            end_date=str(task.end_date) if task.end_date else None,
+            error_msg=task.error_msg,
+            trained_model_id=(
+                str(task.trained_model_id) if task.trained_model_id else None
+            ),
+            train_dataset_ids=task.train_dataset_ids,
+            val_dataset_id=task.val_dataset_id,
+            baseline_model_id=task.baseline_model_id,
+            train_runtime=task.train_runtime,
+            train_samples_per_second=task.train_samples_per_second,
+            train_steps_per_second=task.train_steps_per_second,
+            train_loss=task.train_loss,
+            epoch=task.epoch,
         )

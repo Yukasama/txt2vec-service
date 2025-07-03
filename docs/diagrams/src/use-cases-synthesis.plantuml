@@ -1,0 +1,38 @@
+@startuml use-cases-synthesis
+left to right direction
+skinparam actorStyle awesome
+actor User
+
+package "Synthetic Data Generation" {
+    usecase UploadMedia as "Upload Media Files\n(PDF, Images)"
+    usecase GenerateFromDataset as "Generate from\nExisting Dataset"
+    usecase MonitorSynthesis as "Monitor Synthesis\nTask Status"
+}
+
+package "Media Processing" {
+    usecase ExtractFromPDF as "Extract Text\nfrom PDF Documents"
+    usecase ProcessImages as "Process Images\nwith OCR"
+    usecase ValidateContent as "Validate Extracted\nContent Quality"
+}
+
+package "Dataset Enhancement" {
+    usecase CreateQuestionPairs as "Create Question-Answer\nPairs from Content"
+    usecase GenerateVariations as "Generate Synthetic\nData Variations"
+    usecase FormatOutput as "Format as JSONL\nDataset"
+}
+
+User --> UploadMedia
+User --> GenerateFromDataset
+User --> MonitorSynthesis
+
+UploadMedia --> ExtractFromPDF
+UploadMedia --> ProcessImages
+ExtractFromPDF --> ValidateContent
+ProcessImages --> ValidateContent
+
+GenerateFromDataset --> CreateQuestionPairs
+ValidateContent --> CreateQuestionPairs
+CreateQuestionPairs --> GenerateVariations
+GenerateVariations --> FormatOutput
+
+@enduml

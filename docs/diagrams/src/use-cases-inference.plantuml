@@ -1,0 +1,38 @@
+@startuml use-cases-inference
+left to right direction
+skinparam actorStyle awesome
+actor User
+
+package "Embedding Generation" {
+    usecase GenerateEmbeddings as "Generate Text\nEmbeddings"
+    usecase BatchProcess as "Batch Process\nMultiple Texts"
+    usecase GetModelStats as "Get Model Usage\nStatistics"
+}
+
+package "Model Management" {
+    usecase ListModels as "List Available\nEmbedding Models"
+    usecase CacheModels as "Cache Popular\nModels in VRAM"
+    usecase LoadFromCache as "Load Models\nfrom Cache"
+}
+
+package "Performance Optimization" {
+    usecase TrackUsage as "Track Model\nInference Counts"
+    usecase OptimizeMemory as "Optimize VRAM\nUsage"
+    usecase ManageCache as "Manage Model\nCache Strategy"
+}
+
+User --> GenerateEmbeddings
+User --> BatchProcess
+User --> GetModelStats
+User --> ListModels
+
+ListModels --> CacheModels
+CacheModels --> LoadFromCache
+GenerateEmbeddings --> TrackUsage
+BatchProcess --> TrackUsage
+
+TrackUsage --> OptimizeMemory
+LoadFromCache --> OptimizeMemory
+OptimizeMemory --> ManageCache
+
+@enduml

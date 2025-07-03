@@ -69,6 +69,9 @@ async def train_model(
     )
     tag_time = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
     task = TrainingTask(id=uuid4())
+    task.train_dataset_ids = train_request.train_dataset_ids
+    task.val_dataset_id = train_request.val_dataset_id
+    task.baseline_model_id = str(model.id) if hasattr(model, "id") else None
     clean_model_name = model.model_tag.replace("models--", "").replace("--", "-")
     output_dir = (
         f"data/models/{clean_model_name}-finetuned-{tag_time}-{str(task.id)[:8]}"
@@ -115,4 +118,4 @@ async def get_training_status(
     task = await get_train_task_by_id_db(db, task_id)
     if not task:
         raise TrainingTaskNotFoundError(str(task_id))
-    return TrainingStatusResponse.from_task(task)
+    return TrainingStatusResponse.from_training_task(task)

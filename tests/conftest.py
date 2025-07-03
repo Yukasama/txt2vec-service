@@ -73,7 +73,7 @@ def redis_container() -> Generator[RedisContainer]:
 @pytest.fixture(scope="session", autouse=True)
 def dramatiq_worker(redis_container: RedisContainer) -> Generator[None]:  # noqa: ARG001
     """Fixture to start a Dramatiq worker for testing."""
-    cmd = [sys.executable, "-m", "dramatiq", "vectorize.tasks", "-p", "1", "-t", "4"]
+    cmd = [sys.executable, "-m", "dramatiq", "vectorize.tasks", "-p", "2", "-t", "8"]
     worker = subprocess.Popen(cmd, env=os.environ.copy())  # noqa: S603
     time.sleep(2)
 

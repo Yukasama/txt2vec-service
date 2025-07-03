@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID, uuid4
 
+from sqlalchemy import JSON
 from sqlmodel import Column, DateTime, Field, Relationship, SQLModel, func
 
 from vectorize.task.task_status import TaskStatus
@@ -48,6 +49,10 @@ class TrainingTask(SQLModel, table=True):
 
     trained_model: Optional["AIModel"] = Relationship(back_populates="training_tasks")
 
+    baseline_model_id: str | None = Field(
+        default=None, description="ID of the baseline model used for training."
+    )
+
     created_at: datetime = Field(
         sa_column=Column(DateTime(timezone=True), insert_default=func.now()),
         description="Timestamp when the training task was created.",
@@ -60,9 +65,13 @@ class TrainingTask(SQLModel, table=True):
         description="Timestamp when the training task was last updated.",
     )
 
-    validation_dataset_path: str | None = Field(
-        default=None,
-        description="Path to the validation dataset used during training.",
+    train_dataset_ids: list[str] = Field(
+        description="List of training dataset IDs used for training.",
+        sa_column=Column(JSON),
+    )
+
+    val_dataset_id: str | None = Field(
+        default=None, description="ID of the validation dataset used during training."
     )
 
     train_runtime: float | None = Field(

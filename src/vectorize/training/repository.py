@@ -13,10 +13,35 @@ from .models import TrainingTask
 __all__ = [
     "get_train_task_by_id_db",
     "save_training_task_db",
+    "update_training_task_dataset_ids_db",
     "update_training_task_metrics_db",
     "update_training_task_status_db",
     "update_training_task_validation_dataset_db",
 ]
+
+
+async def update_training_task_dataset_ids_db(
+    db: AsyncSession,
+    task_id: UUID,
+    train_dataset_ids: list[str],
+    val_dataset_id: str | None = None
+) -> None:
+    """Update the dataset IDs of a TrainingTask.
+
+    Args:
+        db: The database session.
+        task_id: The ID of the training task.
+        train_dataset_ids: List of training dataset IDs.
+        val_dataset_id: Optional validation dataset ID.
+    """
+    result = await db.exec(select(TrainingTask).where(TrainingTask.id == task_id))
+    task = result.first()
+    if task:
+        task.train_dataset_ids = train_dataset_ids
+        task.val_dataset_id = val_dataset_id
+        task.updated_at = datetime.now(UTC)
+        await db.commit()
+        await db.refresh(task)
 
 
 async def save_training_task_db(db: AsyncSession, task: TrainingTask) -> None:
@@ -84,19 +109,19 @@ async def update_training_task_metrics_db(
 
 
 async def update_training_task_validation_dataset_db(
-    db: AsyncSession, task_id: UUID, validation_dataset_path: str
+    db: AsyncSession, task_id: UUID, val_dataset_id: str
 ) -> None:
-    """Update the validation dataset path of a TrainingTask.
+    """Update the validation dataset ID of a TrainingTask.
 
     Args:
         db (AsyncSession): The database session.
         task_id (UUID): The ID of the training task.
-        validation_dataset_path (str): Path to the validation dataset.
+        val_dataset_id (str): ID of the validation dataset.
     """
     result = await db.exec(select(TrainingTask).where(TrainingTask.id == task_id))
     task = result.first()
     if task:
-        task.validation_dataset_path = validation_dataset_path
+        task.val_dataset_id = val_dataset_id
         task.updated_at = datetime.now(UTC)
         await db.commit()
         await db.refresh(task)
