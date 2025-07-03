@@ -30,10 +30,10 @@ Welcome to **Vectorize**, a Text Embedding Service developed for Robert Bosch Gm
 
 Get up and running with Vectorize in just a few steps:
 
-1. **[Setup Environment](installation.md)** - Install dependencies and configure your development environment
-2. **[Configure Settings](configuration.md)** - Set up your `.env` file with required configurations
-3. **[Start the Server](installation.md#running-vectorize)** - Launch Vectorize locally or with Docker
-4. **[Explore the API](api.md)** - Discover available endpoints and capabilities
+1. **[Setup Environment](docs/installation.md)** - Install dependencies and configure your development environment
+2. **[Configure Settings](docs/configuration.md)** - Set up your `.env` file with required configurations
+3. **[Start the Server](docs/installation.md#running-vectorize)** - Launch Vectorize locally or with Docker
+4. **[Explore the API](docs/api.md)** - Discover available endpoints and capabilities
 
 ### Quick Commands
 
@@ -79,9 +79,9 @@ vectorize/
 
 | Guide                                      | Description                                         |
 | ------------------------------------------ | --------------------------------------------------- |
-| [Installation](installation.md)            | Complete setup guide for development and production |
-| [Configuration](configuration.md)          | Environment variables and settings management       |
-| [Quick Start](installation.md#quick-start) | Get running in 5 minutes                            |
+| [Installation](docs/installation.md)            | Complete setup guide for development and production |
+| [Configuration](docs/configuration.md)          | Environment variables and settings management       |
+| [Quick Start](docs/installation.md#quick-start) | Get running in 5 minutes                            |
 
 ### User Guides
 
@@ -98,9 +98,9 @@ vectorize/
 
 | Resource                        | Description                          |
 | ------------------------------- | ------------------------------------ |
-| [API Reference](api.md)         | Complete REST API documentation      |
-| [Contributing](contributing.md) | How to contribute to the project     |
-| [Local CI with Act](act.md)     | Run GitHub Actions workflows locally |
+| [API Reference](docs/api.md)         | Complete REST API documentation      |
+| [Contributing](docs/contributing.md) | How to contribute to the project     |
+| [Local CI with Act](docs/act.md)     | Run GitHub Actions workflows locally |
 
 ## Key Features in Detail
 
@@ -142,7 +142,7 @@ We welcome contributions from the community! Here's how to get involved:
 4. **Update Documentation** - Help others understand your changes
 5. **Submit a Pull Request** - Share your improvements with the community
 
-See our [Contributing Guide](contributing.md) for detailed instructions.
+See our [Contributing Guide](docs/contributing.md) for detailed instructions.
 
 ## Contributors
 
@@ -201,4 +201,4 @@ For complete terms and conditions, see the [full license text](https://www.apach
 
 ---
 
-**Ready to get started?** Check out our [Installation Guide](installation.md) or dive into the [API Documentation](api.md)!
+**Ready to get started?** Check out our [Installation Guide](/docs/installation.md) or dive into the [API Documentation](docs/api.md)!
