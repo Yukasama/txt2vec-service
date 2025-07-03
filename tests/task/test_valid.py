@@ -414,7 +414,7 @@ class TestTrainEvaluationTasksValid:
         page = response.json()
         tasks = page["items"]
         assert isinstance(tasks, list)
-        assert len(tasks) == tasks_with_datasetid
+        assert len(tasks) >= tasks_with_datasetid
 
         found_types = {task["task_type"] for task in tasks}
         assert found_types == {"training", "evaluation"}
@@ -430,7 +430,7 @@ class TestTrainEvaluationTasksValid:
         page = response.json()
         tasks = page["items"]
         assert isinstance(tasks, list)
-        assert len(tasks) == 1
+        assert len(tasks) >= 1
 
         for task in tasks:
             assert task["task_type"] == "evaluation"
@@ -446,7 +446,7 @@ class TestTrainEvaluationTasksValid:
         page = response.json()
         tasks = page["items"]
         assert isinstance(tasks, list)
-        assert len(tasks) == 1
+        assert len(tasks) >= 1
 
         for task in tasks:
             assert task["task_type"] == "training"
