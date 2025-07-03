@@ -178,7 +178,7 @@ class EvaluationTestHelper:
             assert field in status_data, f"Missing required field: {field}"
 
         # Verify metadata fields are present in schema (even if None)
-        metadata_fields = ["model_tag", "dataset_info", "baseline_model_tag"]
+        metadata_fields = ["model_tag", "baseline_model_tag"]
         for field in metadata_fields:
             assert field in status_data, f"Missing metadata field: {field}"
 
@@ -261,7 +261,7 @@ class TestEvaluationIntegration:
             assert immediate_data["task_id"] == task_id
 
             # Verify metadata fields are present
-            metadata_fields = ["model_tag", "dataset_info", "baseline_model_tag"]
+            metadata_fields = ["model_tag", "baseline_model_tag"]
             for field in metadata_fields:
                 assert field in immediate_data, f"Missing metadata field: {field}"
 

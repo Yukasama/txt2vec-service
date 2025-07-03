@@ -50,7 +50,6 @@ async def _run_baseline_evaluation(
             max_samples=evaluation_request.max_samples,
         )
 
-    # Run evaluation in thread pool with yielding
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
         future = executor.submit(evaluate_in_thread)
 
@@ -156,17 +155,31 @@ async def run_evaluation_bg(
                 db, evaluation_request
             )
 
-            dataset_info = await EvaluationDatasetResolver.get_dataset_info(
-                db, evaluation_request
-            )
+            from vectorize.evaluation.repository import get_evaluation_task_by_id_db
+            eval_task = await get_evaluation_task_by_id_db(db, task_uuid)
+            evaluation_dataset_ids: list[str] = []
+
+            if evaluation_request.training_task_id:
+                from vectorize.training.repository import get_train_task_by_id_db
+                train_task = await get_train_task_by_id_db(db, UUID(evaluation_request.training_task_id))
+                if train_task and hasattr(train_task, "train_dataset_ids"):
+                    evaluation_dataset_ids = [str(x) for x in getattr(train_task, "train_dataset_ids", [])]
+            elif evaluation_request.dataset_id:
+                try:
+                    evaluation_dataset_ids = [str(UUID(evaluation_request.dataset_id))]
+                except Exception:
+                    evaluation_dataset_ids = []
+
+            if eval_task:
+                eval_task.evaluation_dataset_ids = evaluation_dataset_ids
+                db.add(eval_task)
+                await db.commit()
 
             await db_manager.update_task_metadata(
                 model_tag=evaluation_request.model_tag,
-                dataset_info=dataset_info,
                 baseline_model_tag=evaluation_request.baseline_model_tag,
             )
 
-            # Load evaluation engine in executor to avoid blocking
             loop = asyncio.get_running_loop()
 
             def create_engine() -> EvaluationEngine:

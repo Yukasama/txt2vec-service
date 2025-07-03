@@ -59,21 +59,18 @@ class EvaluationDatabaseManager:
     async def update_task_metadata(
         self,
         model_tag: str,
-        dataset_info: str | None,
         baseline_model_tag: str | None = None,
     ) -> None:
         """Update evaluation task metadata.
 
         Args:
             model_tag: Model tag being evaluated
-            dataset_info: Dataset information string
             baseline_model_tag: Optional baseline model tag
         """
         await update_evaluation_task_metadata_db(
             self.db,
             self.task_id,
             model_tag=model_tag,
-            dataset_info=dataset_info,
             baseline_model_tag=baseline_model_tag,
         )
 
