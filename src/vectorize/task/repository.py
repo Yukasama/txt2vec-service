@@ -4,7 +4,7 @@ from collections.abc import Sequence
 from typing import Any
 
 from loguru import logger
-from sqlalchemy import select, union_all
+from sqlalchemy import func, select, union_all
 from sqlmodel import text
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -21,7 +21,7 @@ from .task_type import TaskType
 __all__ = ["get_tasks_db"]
 
 
-async def get_tasks_db(db: AsyncSession, params: TaskFilters) -> Sequence:  # noqa: PLR0912
+async def get_tasks_db(db: AsyncSession, params: TaskFilters) -> tuple[Sequence, int]:
     """Retrieve tasks from database with filtering and pagination.
 
     Aggregates tasks from multiple types (upload, synthesis, dataset) with
@@ -33,11 +33,11 @@ async def get_tasks_db(db: AsyncSession, params: TaskFilters) -> Sequence:  # no
                 specific statuses, and time window criteria.
 
     Returns:
-        Sequence of task action rows ordered by creation date (newest first).
-        Each row contains id, task_status, created_at, end_date, and task_type.
+        Tuple containing:
+        - Sequence of task action rows ordered by creation date (newest first).
+          Each row contains id, task_status, created_at, end_date, and task_type.
+        - Total count of tasks matching the filters (without pagination).
     """
-    status_set = set(params.statuses or [])
-
     if params.baseline_id:
         available_types = [TaskType.TRAINING]
     elif params.dataset_id:
@@ -56,7 +56,68 @@ async def get_tasks_db(db: AsyncSession, params: TaskFilters) -> Sequence:  # no
     else:
         task_types = available_types
 
+    queries = _build_task_queries(task_types, params)
+
+    if not queries:
+        return [], 0
+
+    combined = queries[0] if len(queries) == 1 else union_all(*queries)
+    tasks_sq = combined.subquery("tasks_sq")
+
+    stmt = select(tasks_sq)
+
+    bind_params: dict[str, Any] = {}
+    if params.tag:
+        stmt = stmt.where(tasks_sq.c.tag == text(":tag"))
+        bind_params["tag"] = params.tag
+
+    count_stmt = select(func.count()).select_from(tasks_sq)
+    if params.tag:
+        count_stmt = count_stmt.where(tasks_sq.c.tag == text(":tag"))
+
+    if bind_params:
+        total_result = await db.exec(count_stmt, params=bind_params)  # type: ignore[arg-type]
+    else:
+        total_result = await db.exec(count_stmt)  # type: ignore[arg-type]
+
+    total = total_result.scalar() or 0
+
+    stmt = (
+        stmt.order_by(tasks_sq.c.created_at.desc())
+        .limit(params.limit)
+        .offset(params.offset or 0)
+    )
+
+    if bind_params:
+        result = await db.exec(stmt, params=bind_params)  # type: ignore[arg-type]
+    else:
+        result = await db.exec(stmt)  # type: ignore[arg-type]
+
+    rows = result.all()
+    logger.debug(
+        "Tasks fetched from DB", count=len(rows), total=total, params=str(params)
+    )
+    return rows, total
+
+
+# -----------------------------------------------------------------------------
+# Utility ---------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
+
+def _build_task_queries(task_types: list[TaskType], params: TaskFilters) -> list:
+    """Build queries for specified task types with given parameters.
+
+    Args:
+        task_types: List of task types to build queries for.
+        params: Filter parameters for the queries.
+
+    Returns:
+        List of SQLAlchemy query objects.
+    """
+    status_set = set(params.statuses or [])
     queries = []
+
     for tt in task_types:
         if tt == TaskType.MODEL_UPLOAD:
             queries.append(
@@ -107,29 +168,4 @@ async def get_tasks_db(db: AsyncSession, params: TaskFilters) -> Sequence:  # no
                 )
             )
 
-    if not queries:
-        return []
-
-    combined = queries[0] if len(queries) == 1 else union_all(*queries)
-    tasks_sq = combined.subquery("tasks_sq")
-    stmt = select(tasks_sq)
-
-    bind_params: dict[str, Any] = {}
-    if params.tag:
-        stmt = stmt.where(tasks_sq.c.tag == text(":tag"))
-        bind_params["tag"] = params.tag
-
-    stmt = (
-        stmt.order_by(tasks_sq.c.created_at.desc())
-        .limit(params.limit)
-        .offset(params.offset or 0)
-    )
-
-    if bind_params:
-        result = await db.exec(stmt, params=bind_params)  # type: ignore[arg-type]
-    else:
-        result = await db.exec(stmt)  # type: ignore[arg-type]
-
-    rows = result.all()
-    logger.debug("Tasks fetched from DB", count=len(rows), params=str(params))
-    return rows
+    return queries

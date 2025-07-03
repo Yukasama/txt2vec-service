@@ -29,37 +29,52 @@ class TestAllTasksValid:
     @classmethod
     async def test_get_all_tasks_default(cls, client: TestClient) -> None:
         """Test getting all tasks with default parameters."""
-        default_hours = 1
+        default_limit = 10
         response = client.get("/tasks")
 
         assert response.status_code == status.HTTP_200_OK
-        tasks = response.json()
+        page = response.json()
+        assert isinstance(page, dict)
+        assert set(page.keys()) == {"items", "total", "limit", "offset"}
+
+        tasks = page["items"]
         assert isinstance(tasks, list)
-        assert len(tasks) >= default_hours
+        assert page["limit"] == default_limit
+        assert page["offset"] == 0
+        assert page["total"] >= len(tasks)
 
     @classmethod
-    async def test_get_tasks_with_limit(cls, client: TestClient) -> None:
-        """Test tasks endpoint with limit parameter."""
-        limit = 2
-        response = client.get(f"/tasks?limit={limit}")
+    async def test_get_tasks_pagination_offset_behavior(
+        cls, client: TestClient
+    ) -> None:
+        """Test that pagination offset works correctly."""
+        limit = 3
 
+        first_page_response = client.get(f"/tasks?limit={limit}&offset=0")
+        assert first_page_response.status_code == status.HTTP_200_OK
+        first_page = first_page_response.json()
+
+        second_page_response = client.get(f"/tasks?limit={limit}&offset={limit}")
+        assert second_page_response.status_code == status.HTTP_200_OK
+        second_page = second_page_response.json()
+
+        first_ids = {task["id"] for task in first_page["items"]}
+        second_ids = {task["id"] for task in second_page["items"]}
+        assert first_ids.isdisjoint(second_ids)
+
+        assert first_page["total"] == second_page["total"]
+
+    @classmethod
+    async def test_get_tasks_pagination_limit_constraints(
+        cls, client: TestClient
+    ) -> None:
+        """Test tasks endpoint pagination limits."""
+        limit = 5
+        response = client.get(f"/tasks?limit={5}")
         assert response.status_code == status.HTTP_200_OK
-        tasks = response.json()
-        assert isinstance(tasks, list)
-        assert len(tasks) <= limit
-
-    @classmethod
-    async def test_get_tasks_with_offset(cls, client: TestClient) -> None:
-        """Test tasks endpoint with offset parameter."""
-        all_response = client.get("/tasks?limit=100")
-        all_tasks = all_response.json()
-
-        if len(all_tasks) > 1:
-            response = client.get("/tasks?offset=1")
-            assert response.status_code == status.HTTP_200_OK
-            offset_tasks = response.json()
-            assert isinstance(offset_tasks, list)
-            assert len(offset_tasks) <= len(all_tasks)
+        page = response.json()
+        assert page["limit"] == limit
+        assert len(page["items"]) <= limit
 
     @classmethod
     async def test_get_tasks_status_filter_running(cls, client: TestClient) -> None:
@@ -67,7 +82,8 @@ class TestAllTasksValid:
         response = client.get("/tasks?status=R")
 
         assert response.status_code == status.HTTP_200_OK
-        tasks = response.json()
+        page = response.json()
+        tasks = page["items"]
         assert isinstance(tasks, list)
 
         for action in tasks:
@@ -79,7 +95,8 @@ class TestAllTasksValid:
         response = client.get("/tasks?status=D")
 
         assert response.status_code == status.HTTP_200_OK
-        tasks = response.json()
+        page = response.json()
+        tasks = page["items"]
         assert isinstance(tasks, list)
 
         for action in tasks:
@@ -91,7 +108,8 @@ class TestAllTasksValid:
         response = client.get("/tasks?status=R&status=D")
 
         assert response.status_code == status.HTTP_200_OK
-        tasks = response.json()
+        page = response.json()
+        tasks = page["items"]
         assert isinstance(tasks, list)
 
         valid_statuses = {TaskStatus.RUNNING.value, TaskStatus.DONE.value}
@@ -104,7 +122,8 @@ class TestAllTasksValid:
         response = client.get("/tasks?within_hours=1")
 
         assert response.status_code == status.HTTP_200_OK
-        tasks = response.json()
+        page = response.json()
+        tasks = page["items"]
         assert isinstance(tasks, list)
 
         for action in tasks:
@@ -118,7 +137,8 @@ class TestAllTasksValid:
         response = client.get("/tasks?within_hours=3")
 
         assert response.status_code == status.HTTP_200_OK
-        tasks = response.json()
+        page = response.json()
+        tasks = page["items"]
         assert isinstance(tasks, list)
         assert len(tasks) >= results
 
@@ -129,7 +149,8 @@ class TestAllTasksValid:
         response = client.get(f"/tasks?limit={limit}&status=R&within_hours=2")
 
         assert response.status_code == status.HTTP_200_OK
-        tasks = response.json()
+        page = response.json()
+        tasks = page["items"]
         assert isinstance(tasks, list)
         assert len(tasks) <= limit
 
@@ -144,7 +165,8 @@ class TestAllTasksValid:
         response = client.get("/tasks?limit=1")
 
         assert response.status_code == status.HTTP_200_OK
-        tasks = response.json()
+        page = response.json()
+        tasks = page["items"]
         assert isinstance(tasks, list)
 
         if tasks:
@@ -163,7 +185,8 @@ class TestAllTasksValid:
         response = client.get("/tasks?tag=example-hf-model")
 
         assert response.status_code == status.HTTP_200_OK
-        tasks = response.json()
+        page = response.json()
+        tasks = page["items"]
         assert isinstance(tasks, list)
 
         for task in tasks:
@@ -176,7 +199,8 @@ class TestAllTasksValid:
         response = client.get("/tasks?tag=nonexistent-tag")
 
         assert response.status_code == status.HTTP_200_OK
-        tasks = response.json()
+        page = response.json()
+        tasks = page["items"]
         assert isinstance(tasks, list)
         assert len(tasks) == 0
 
@@ -186,7 +210,8 @@ class TestAllTasksValid:
         response = client.get("/tasks?task_type=model_upload")
 
         assert response.status_code == status.HTTP_200_OK
-        tasks = response.json()
+        page = response.json()
+        tasks = page["items"]
         assert isinstance(tasks, list)
 
         for task in tasks:
@@ -198,7 +223,8 @@ class TestAllTasksValid:
         response = client.get("/tasks?task_type=model_upload&task_type=dataset_upload")
 
         assert response.status_code == status.HTTP_200_OK
-        tasks = response.json()
+        page = response.json()
+        tasks = page["items"]
         assert isinstance(tasks, list)
 
         valid_types = {"model_upload", "dataset_upload"}
@@ -222,7 +248,8 @@ class TestAllTasksValid:
             response = client.get(f"/tasks?task_type={task_type}")
 
             assert response.status_code == status.HTTP_200_OK
-            tasks = response.json()
+            page = response.json()
+            tasks = page["items"]
             assert isinstance(tasks, list)
 
             for task in tasks:
@@ -236,7 +263,8 @@ class TestAllTasksValid:
         response = client.get("/tasks?tag=example-hf-model&task_type=model_upload")
 
         assert response.status_code == status.HTTP_200_OK
-        tasks = response.json()
+        page = response.json()
+        tasks = page["items"]
         assert isinstance(tasks, list)
 
         for task in tasks:
@@ -255,7 +283,8 @@ class TestAllTasksValid:
         )
 
         assert response.status_code == status.HTTP_200_OK
-        tasks = response.json()
+        page = response.json()
+        tasks = page["items"]
         assert isinstance(tasks, list)
         assert len(tasks) <= limit
 
@@ -271,7 +300,8 @@ class TestAllTasksValid:
         response = client.get("/tasks?limit=100")
 
         assert response.status_code == status.HTTP_200_OK
-        tasks = response.json()
+        page = response.json()
+        tasks = page["items"]
         assert isinstance(tasks, list)
 
         found_types = {task["task_type"] for task in tasks}
@@ -297,6 +327,63 @@ class TestAllTasksValid:
 
 @pytest.mark.asyncio
 @pytest.mark.tasks
+class TestTrainPaginatedTasksValid:
+    """Tests for valid paginated training and evaluation tasks endpoint requests."""
+
+    @classmethod
+    async def test_get_tasks_with_limit(cls, client: TestClient) -> None:
+        """Test tasks endpoint with limit parameter."""
+        limit = 2
+        response = client.get(f"/tasks?limit={limit}")
+
+        assert response.status_code == status.HTTP_200_OK
+        page = response.json()
+        tasks = page["items"]
+        assert isinstance(tasks, list)
+        assert len(tasks) <= limit
+        assert page["limit"] == limit
+
+    @classmethod
+    async def test_get_tasks_with_offset(cls, client: TestClient) -> None:
+        """Test tasks endpoint with offset parameter."""
+        all_response = client.get("/tasks?limit=100")
+        all_page = all_response.json()
+        all_tasks = all_page["items"]
+
+        if len(all_tasks) > 1:
+            response = client.get("/tasks?offset=1")
+            assert response.status_code == status.HTTP_200_OK
+            page = response.json()
+            offset_tasks = page["items"]
+            assert isinstance(offset_tasks, list)
+            assert len(offset_tasks) <= len(all_tasks)
+            assert page["offset"] == 1
+
+    @classmethod
+    async def test_get_tasks_pagination_structure(cls, client: TestClient) -> None:
+        """Test tasks endpoint pagination structure."""
+        limit = 5
+        response = client.get(f"/tasks?limit={limit}")
+
+        assert response.status_code == status.HTTP_200_OK
+        page = response.json()
+
+        required_fields = {"items", "total", "limit", "offset"}
+        assert set(page.keys()) == required_fields
+
+        assert isinstance(page["items"], list)
+        assert isinstance(page["total"], int)
+        assert isinstance(page["limit"], int)
+        assert isinstance(page["offset"], int)
+
+        assert page["limit"] == limit
+        assert page["offset"] == 0
+        assert page["total"] >= 0
+        assert len(page["items"]) <= limit
+
+
+@pytest.mark.asyncio
+@pytest.mark.tasks
 class TestTrainEvaluationTasksValid:
     """Tests for valid training and evaluation tasks endpoint requests."""
 
@@ -306,7 +393,8 @@ class TestTrainEvaluationTasksValid:
         response = client.get(f"/tasks?baseline_id={_BASELINE_ID}")
 
         assert response.status_code == status.HTTP_200_OK
-        tasks = response.json()
+        page = response.json()
+        tasks = page["items"]
         assert isinstance(tasks, list)
         assert len(tasks) == 1
 
@@ -323,7 +411,8 @@ class TestTrainEvaluationTasksValid:
         response = client.get(f"/tasks?dataset_id={_DATASET_ID1}")
 
         assert response.status_code == status.HTTP_200_OK
-        tasks = response.json()
+        page = response.json()
+        tasks = page["items"]
         assert isinstance(tasks, list)
         assert len(tasks) == tasks_with_datasetid
 
@@ -338,7 +427,8 @@ class TestTrainEvaluationTasksValid:
         response = client.get(f"/tasks?dataset_id={_DATASET_ID2}")
 
         assert response.status_code == status.HTTP_200_OK
-        tasks = response.json()
+        page = response.json()
+        tasks = page["items"]
         assert isinstance(tasks, list)
         assert len(tasks) == 1
 
@@ -353,7 +443,8 @@ class TestTrainEvaluationTasksValid:
         response = client.get(f"/tasks?dataset_id={_DATASET_ID1}&task_type=training")
 
         assert response.status_code == status.HTTP_200_OK
-        tasks = response.json()
+        page = response.json()
+        tasks = page["items"]
         assert isinstance(tasks, list)
         assert len(tasks) == 1
 

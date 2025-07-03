@@ -8,6 +8,7 @@ from loguru import logger
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from vectorize.config.db import get_session
+from vectorize.dataset.pagination import Page
 
 from .models import TaskModel
 from .schemas import TaskFilters
@@ -24,15 +25,15 @@ router = APIRouter(tags=["Tasks"])
 @router.get("", summary="Get filterable tasks")
 async def get_tasks(  # noqa: PLR0913, PLR0917
     db: Annotated[AsyncSession, Depends(get_session)],
-    limit: Annotated[int | None, Query(ge=1, le=100)] = None,
-    offset: Annotated[int | None, Query(ge=0)] = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 10,
+    offset: Annotated[int, Query(ge=0)] = 0,
     tag: Annotated[str | None, Query(max_length=100)] = None,
     baseline_id: Annotated[UUID | None, Query()] = None,
     dataset_id: Annotated[UUID | None, Query()] = None,
     task_type: Annotated[list[TaskType] | None, Query()] = None,
     status: Annotated[list[TaskStatus] | None, Query()] = None,
     within_hours: Annotated[int, Query(ge=1)] = 1,
-) -> list[TaskModel]:
+) -> Page[TaskModel]:
     """Get tasks with filtering and pagination.
 
     Args:
@@ -47,7 +48,7 @@ async def get_tasks(  # noqa: PLR0913, PLR0917
         within_hours: Time window in hours to filter tasks (default 1).
 
     Returns:
-        List of task action models with metadata.
+        Paginated list of task action models with metadata.
     """
     task_filters = TaskFilters(
         limit=limit,
@@ -59,5 +60,9 @@ async def get_tasks(  # noqa: PLR0913, PLR0917
         statuses=status,
         within_hours=within_hours,
     )
+
     logger.debug("Fetching tasks with parameters", filters=str(task_filters))
-    return await get_tasks_svc(db, task_filters)
+    tasks, total = await get_tasks_svc(db, task_filters)
+
+    logger.debug("Tasks retrieved", length=len(tasks), total=total)
+    return Page[TaskModel](items=tasks, total=total, limit=limit, offset=offset)
