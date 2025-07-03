@@ -110,8 +110,6 @@ async def process_github_model_bg(
     Raises:
         Exception: If an error occurs during model processing or database operations.
     """
-    key = f"{owner}/{repo}@{branch}"
-    normalized_key = key.replace("/", "_")
     async with AsyncSession(engine, expire_on_commit=False) as db:
         task_uid = UUID(task_id)
         try:
@@ -119,7 +117,7 @@ async def process_github_model_bg(
             await load_github_model_and_cache_only_svc(owner, repo, branch)
 
             ai_model = AIModel(
-                model_tag=normalized_key,
+                model_tag=f"{owner}_{repo}",
                 name=repo,
                 source=ModelSource.GITHUB,
             )

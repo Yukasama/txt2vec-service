@@ -23,7 +23,6 @@ from vectorize.ai_model.model_source import RemoteModelSource
 from vectorize.ai_model.service import get_ai_model_svc
 from vectorize.common.exceptions import InternalServerError, InvalidFileError
 from vectorize.config.db import get_session
-from vectorize.task.task_status import TaskStatus
 
 from .exceptions import InvalidUrlError, ModelAlreadyExistsError
 from .exceptions import ModelNotFoundError as RepoModelNotFound
@@ -62,7 +61,6 @@ async def load_model_huggingface(
         ModelNotFoundError: If the model is not found on Hugging Face.
         InternalServerError: If an internal error occurs while checking the model.
     """
-    key = f"{data.model_tag}@{data.revision}"
     # Convert model_tag to the same format as stored in the database
     db_model_tag = data.model_tag.replace("/", "_")
 
@@ -82,10 +80,8 @@ async def load_model_huggingface(
         ) from e
 
     upload_task = UploadTask(
-        tag=key,
-        task_status=TaskStatus.RUNNING,
+        tag=db_model_tag,
         source=RemoteModelSource.HUGGINGFACE,
-        model_tag=key,
     )
     await save_upload_task_db(db, upload_task)
     process_huggingface_model_bg.send(
@@ -119,7 +115,7 @@ async def load_model_github(
         Response with 201 status and Location header.
     """
     branch = data.revision or "main"
-    key = f"{data.owner}/{data.repo_name}@{branch}"
+    key = f"{data.owner}_{data.repo_name}"
     base_url = f"https://github.com/{data.owner}/{data.repo_name}"
 
     logger.info("Importing GitHub model {} @ {}", data.repo_name, branch)
@@ -137,9 +133,7 @@ async def load_model_github(
     except Exception as e:
         raise InternalServerError("Error checking GitHub repository") from e
 
-    upload_task = UploadTask(
-        tag=key, task_status=TaskStatus.RUNNING, source=RemoteModelSource.GITHUB
-    )
+    upload_task = UploadTask(tag=key, source=RemoteModelSource.GITHUB)
 
     await save_upload_task_db(db, upload_task)
     process_github_model_bg.send(

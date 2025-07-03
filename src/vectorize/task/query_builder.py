@@ -38,18 +38,13 @@ def build_query(  # noqa: ANN201
     ai_table = AIModel.__table__  # type: ignore
 
     if hasattr(model, "trained_model_id"):
-        if hasattr(model, "baseline_model_id"):
-            join_expr = model_table.outerjoin(
-                ai_table,
-                func.coalesce(
-                    model_table.c.trained_model_id, model_table.c.baseline_model_id
-                )
-                == ai_table.c.id,
+        join_expr = model_table.outerjoin(
+            ai_table,
+            func.coalesce(
+                model_table.c.trained_model_id, model_table.c.baseline_model_id
             )
-        else:
-            join_expr = model_table.outerjoin(
-                ai_table, model_table.c.trained_model_id == ai_table.c.id
-            )
+            == ai_table.c.id,
+        )
         tag_col = ai_table.c.model_tag
     elif hasattr(model, "model_tag"):
         join_expr = model_table
