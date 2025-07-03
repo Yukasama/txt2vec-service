@@ -290,7 +290,10 @@ async def seed_db(session: AsyncSession) -> None:
             created_at=datetime.now(tz=UTC) - timedelta(minutes=30),
             model_id=AI_MODEL_LOCALTRAINMODEL_ID,
             model_tag="Evaluation Model",
-            evaluation_dataset_ids=[str(DATASET_TRAINING_1_ID)],
+            evaluation_dataset_ids=[
+                str(DATASET_TRAINING_1_ID),
+                str(DATASET_TRAINING_2_ID),
+            ],
         ),
     )
 

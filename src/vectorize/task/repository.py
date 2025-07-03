@@ -38,13 +38,18 @@ async def get_tasks_db(db: AsyncSession, params: TaskFilters) -> Sequence:
     """
     status_set = set(params.statuses or [])
 
-    task_types: list[TaskType] = params.task_types or [
-        TaskType.MODEL_UPLOAD,
-        TaskType.SYNTHESIS,
-        TaskType.DATASET_UPLOAD,
-        TaskType.TRAINING,
-        TaskType.EVALUATION,
-    ]
+    if params.baseline_id:
+        task_types: list[TaskType] = [TaskType.TRAINING]
+    elif params.dataset_id:
+        task_types: list[TaskType] = [TaskType.TRAINING, TaskType.EVALUATION]
+    else:
+        task_types: list[TaskType] = params.task_types or [
+            TaskType.MODEL_UPLOAD,
+            TaskType.SYNTHESIS,
+            TaskType.DATASET_UPLOAD,
+            TaskType.TRAINING,
+            TaskType.EVALUATION,
+        ]
 
     queries = []
     for tt in task_types:

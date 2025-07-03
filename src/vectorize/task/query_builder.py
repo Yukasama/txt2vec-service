@@ -15,7 +15,7 @@ __all__ = ["build_query"]
 _UNFINISHED = {TaskStatus.QUEUED, TaskStatus.RUNNING}
 
 
-def build_query(  # noqa: ANN201
+def build_query(  # noqa: ANN201, PLR0912, PLR0913
     model,  # noqa: ANN001
     tag: str,
     *,
@@ -42,16 +42,12 @@ def build_query(  # noqa: ANN201
     model_table = model.__table__
     ai_table = AIModel.__table__  # type: ignore
 
-    # Skip this model if filtering by baseline_id but model doesn't have it
     if baseline_id and not hasattr(model, "baseline_model_id"):
-        # Return empty query for models that don't support baseline_id filtering
         return select(*_get_base_columns(model, tag)).where(literal(False))
 
-    # Skip this model if filtering by dataset_id but model doesn't have dataset fields
     if dataset_id and not (
         hasattr(model, "train_dataset_ids") or hasattr(model, "evaluation_dataset_ids")
     ):
-        # Return empty query for models that don't support dataset_id filtering
         return select(*_get_base_columns(model, tag)).where(literal(False))
 
     if hasattr(model, "trained_model_id"):
@@ -108,18 +104,23 @@ def build_query(  # noqa: ANN201
         dataset_id_str = str(dataset_id)
         if hasattr(model, "train_dataset_ids"):
             query = query.where(
-                func.json_extract(model_table.c.train_dataset_ids, "$").contains(
-                    dataset_id_str
+                func.json_extract(model_table.c.train_dataset_ids, "$").like(
+                    f'%"{dataset_id_str}"%'
                 )
             )
         elif hasattr(model, "evaluation_dataset_ids"):
             query = query.where(
-                func.json_extract(model_table.c.evaluation_dataset_ids, "$").contains(
-                    dataset_id_str
+                func.json_extract(model_table.c.evaluation_dataset_ids, "$").like(
+                    f'%"{dataset_id_str}"%'
                 )
             )
 
     return query
+
+
+# -----------------------------------------------------------------------------
+# Utility ---------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 
 def _get_base_columns(model, tag: str):  # noqa: ANN001
@@ -131,7 +132,6 @@ def _get_base_columns(model, tag: str):  # noqa: ANN001
     else:
         baseline_col = literal(None).label("baseline_id")
 
-    # Simplified column selection for empty queries
     return [
         model_table.c.id,
         literal(None).label("tag"),
@@ -142,11 +142,6 @@ def _get_base_columns(model, tag: str):  # noqa: ANN001
         cast(literal(tag), String).label("task_type"),
         baseline_col,
     ]
-
-
-# -----------------------------------------------------------------------------
-# Utility ---------------------------------------------------------------------
-# -----------------------------------------------------------------------------
 
 
 def _time_filter(model, *, hours: int) -> ColumnElement[bool]:  # noqa: ANN001
