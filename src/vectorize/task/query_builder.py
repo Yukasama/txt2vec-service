@@ -16,7 +16,7 @@ __all__ = ["build_query"]
 _UNFINISHED = {TaskStatus.QUEUED, TaskStatus.RUNNING}
 
 
-def build_query(  # noqa: ANN201, PLR0912, PLR0913
+def build_query(  # noqa: ANN201, PLR0913
     model,  # noqa: ANN001
     tag: str,
     *,
@@ -102,19 +102,7 @@ def build_query(  # noqa: ANN201, PLR0912, PLR0913
         query = query.where(model_table.c.baseline_model_id == str(baseline_id))
 
     if dataset_id:
-        dataset_id_str = str(dataset_id)
-        if hasattr(model, "train_dataset_ids"):
-            query = query.where(
-                func.json_extract(model_table.c.train_dataset_ids, "$").like(
-                    f'%"{dataset_id_str}"%'
-                )
-            )
-        elif hasattr(model, "evaluation_dataset_ids"):
-            query = query.where(
-                func.json_extract(model_table.c.evaluation_dataset_ids, "$").like(
-                    f'%"{dataset_id_str}"%'
-                )
-            )
+        query = _apply_dataset_filter(query, model, dataset_id)
 
     return query
 
@@ -122,6 +110,36 @@ def build_query(  # noqa: ANN201, PLR0912, PLR0913
 # -----------------------------------------------------------------------------
 # Utility ---------------------------------------------------------------------
 # -----------------------------------------------------------------------------
+
+
+def _apply_dataset_filter(query, model, dataset_id: UUID):  # noqa: ANN001, ANN202
+    """Apply dataset ID filter to query based on model capabilities.
+
+    Args:
+        query: SQLAlchemy query to filter.
+        model: SQLModel table class being queried.
+        dataset_id: Dataset ID to filter by.
+
+    Returns:
+        Filtered SQLAlchemy query.
+    """
+    model_table = model.__table__
+    dataset_id_str = str(dataset_id)
+
+    if hasattr(model, "train_dataset_ids"):
+        return query.where(
+            func.json_extract(model_table.c.train_dataset_ids, "$").like(
+                f'%"{dataset_id_str}"%'
+            )
+        )
+    if hasattr(model, "evaluation_dataset_ids"):
+        return query.where(
+            func.json_extract(model_table.c.evaluation_dataset_ids, "$").like(
+                f'%"{dataset_id_str}"%'
+            )
+        )
+
+    return query
 
 
 def _get_base_columns(model, tag: str) -> list[Any]:  # noqa: ANN001
