@@ -82,6 +82,8 @@ async def get_tasks_db(db: AsyncSession, params: TaskFilters) -> Sequence:
                     "training",
                     statuses=status_set,
                     hours=params.within_hours,
+                    baseline_id=params.baseline_id,
+                    dataset_id=params.dataset_id,
                 )
             )
         elif tt == TaskType.EVALUATION:
@@ -91,6 +93,7 @@ async def get_tasks_db(db: AsyncSession, params: TaskFilters) -> Sequence:
                     "evaluation",
                     statuses=status_set,
                     hours=params.within_hours,
+                    dataset_id=params.dataset_id,
                 )
             )
 

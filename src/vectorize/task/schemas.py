@@ -1,5 +1,7 @@
 """Query and filter schemas for tasks."""
 
+from uuid import UUID
+
 from pydantic import BaseModel, Field
 
 from .task_status import TaskStatus
@@ -16,6 +18,12 @@ class TaskFilters(BaseModel):
     )
     offset: int | None = Field(None, ge=0, description="Number of records to skip")
     tag: str | None = Field(None, description="Filter tasks by specific tag")
+    baseline_id: UUID | None = Field(
+        None, description="Filter tasks by specific baseline model ID"
+    )
+    dataset_id: UUID | None = Field(
+        None, description="Filter tasks by specific dataset ID"
+    )
     task_types: list[TaskType] | None = Field(
         None, description="Filter tasks by specific type (e.g., upload, synthesis)"
     )

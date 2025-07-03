@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID, uuid4
 
-from sqlmodel import Column, DateTime, Field, Relationship, SQLModel, func
+from sqlmodel import JSON, Column, DateTime, Field, Relationship, SQLModel, func
 
 from vectorize.task.task_status import TaskStatus
 
@@ -56,6 +56,11 @@ class EvaluationTask(SQLModel, table=True):
     dataset_info: str | None = Field(
         default=None,
         description="Information about the dataset used for evaluation.",
+    )
+
+    evaluation_dataset_ids: list[UUID] = Field(
+        sa_column=Column(JSON),
+        description="List of dataset IDs used for evaluation.",
     )
 
     baseline_model_tag: str | None = Field(

@@ -65,8 +65,7 @@ class TrainingTask(SQLModel, table=True):
         description="Timestamp when the training task was last updated.",
     )
 
-    train_dataset_ids: list[str] | None = Field(
-        default=None,
+    train_dataset_ids: list[UUID] | None = Field(
         description="List of training dataset IDs used for training.",
         sa_column=Column(JSON),
     )

@@ -17,6 +17,7 @@ class TaskModel(BaseModel):
     id: UUID
     tag: str | None = None
     task_status: TaskStatus
+    baseline_id: UUID | None = None
     created_at: datetime
     end_date: datetime | None
     error_msg: str | None = None

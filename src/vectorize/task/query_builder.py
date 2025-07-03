@@ -1,6 +1,7 @@
 """Helpers for tasks repository."""
 
 from datetime import UTC, datetime, timedelta
+from uuid import UUID
 
 from sqlalchemy import ColumnElement, String, cast, func, literal, or_, select
 
@@ -21,6 +22,8 @@ def build_query(  # noqa: ANN201
     statuses: set[TaskStatus],
     hours: int,
     tag_filter: str | None = None,
+    baseline_id: UUID | None = None,
+    dataset_id: UUID | None = None,
 ):
     """Build SQL query for a task model with common filters applied.
 
@@ -30,12 +33,26 @@ def build_query(  # noqa: ANN201
         statuses: Set of task statuses to include.
         hours: Time-window in hours for filtering.
         tag_filter: Optional tag value to filter by.
+        baseline_id: Optional baseline model ID to filter by (TrainingTask only).
+        dataset_id: Optional dataset ID to filter by (TrainingTask and EvaluationTask).
 
     Returns:
         SQLAlchemy *Select* query.
     """
     model_table = model.__table__
     ai_table = AIModel.__table__  # type: ignore
+
+    # Skip this model if filtering by baseline_id but model doesn't have it
+    if baseline_id and not hasattr(model, "baseline_model_id"):
+        # Return empty query for models that don't support baseline_id filtering
+        return select(*_get_base_columns(model, tag)).where(literal(False))
+
+    # Skip this model if filtering by dataset_id but model doesn't have dataset fields
+    if dataset_id and not (
+        hasattr(model, "train_dataset_ids") or hasattr(model, "evaluation_dataset_ids")
+    ):
+        # Return empty query for models that don't support dataset_id filtering
+        return select(*_get_base_columns(model, tag)).where(literal(False))
 
     if hasattr(model, "trained_model_id"):
         join_expr = model_table.outerjoin(
@@ -56,16 +73,24 @@ def build_query(  # noqa: ANN201
         join_expr = model_table
         tag_col = literal(None)
 
+    if hasattr(model, "baseline_model_id"):
+        baseline_col = model_table.c.baseline_model_id.label("baseline_id")
+    else:
+        baseline_col = literal(None).label("baseline_id")
+
+    base_columns = [
+        model_table.c.id,
+        tag_col.label("tag"),
+        model_table.c.task_status,
+        model_table.c.created_at,
+        model_table.c.end_date,
+        model_table.c.error_msg,
+        cast(literal(tag), String).label("task_type"),
+        baseline_col,
+    ]
+
     query = (
-        select(
-            model_table.c.id,
-            tag_col.label("tag"),
-            model_table.c.task_status,
-            model_table.c.created_at,
-            model_table.c.end_date,
-            model_table.c.error_msg,
-            cast(literal(tag), String).label("task_type"),
-        )
+        select(*base_columns)
         .select_from(join_expr)
         .where(_time_filter(model, hours=hours))
     )
@@ -76,7 +101,47 @@ def build_query(  # noqa: ANN201
     if tag_filter and tag_col is not literal(None):
         query = query.where(tag_col == tag_filter)
 
+    if baseline_id and hasattr(model, "baseline_model_id"):
+        query = query.where(model_table.c.baseline_model_id == str(baseline_id))
+
+    if dataset_id:
+        dataset_id_str = str(dataset_id)
+        if hasattr(model, "train_dataset_ids"):
+            query = query.where(
+                func.json_extract(model_table.c.train_dataset_ids, "$").contains(
+                    dataset_id_str
+                )
+            )
+        elif hasattr(model, "evaluation_dataset_ids"):
+            query = query.where(
+                func.json_extract(model_table.c.evaluation_dataset_ids, "$").contains(
+                    dataset_id_str
+                )
+            )
+
     return query
+
+
+def _get_base_columns(model, tag: str):  # noqa: ANN001
+    """Get base columns for consistent empty query structure."""
+    model_table = model.__table__
+
+    if hasattr(model, "baseline_model_id"):
+        baseline_col = model_table.c.baseline_model_id.label("baseline_id")
+    else:
+        baseline_col = literal(None).label("baseline_id")
+
+    # Simplified column selection for empty queries
+    return [
+        model_table.c.id,
+        literal(None).label("tag"),
+        model_table.c.task_status,
+        model_table.c.created_at,
+        model_table.c.end_date,
+        model_table.c.error_msg,
+        cast(literal(tag), String).label("task_type"),
+        baseline_col,
+    ]
 
 
 # -----------------------------------------------------------------------------

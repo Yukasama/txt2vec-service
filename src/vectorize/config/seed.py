@@ -279,6 +279,8 @@ async def seed_db(session: AsyncSession) -> None:
             task_status=TaskStatus.RUNNING,
             created_at=datetime.now(tz=UTC) - timedelta(minutes=30),
             trained_model_id=AI_MODEL_LOCALTRAINMODEL_ID,
+            train_dataset_ids=[str(DATASET_TRAINING_1_ID)],
+            baseline_model_id=str(AI_MODEL_READ_ID),
         ),
     )
     session.add(
@@ -288,6 +290,7 @@ async def seed_db(session: AsyncSession) -> None:
             created_at=datetime.now(tz=UTC) - timedelta(minutes=30),
             model_id=AI_MODEL_LOCALTRAINMODEL_ID,
             model_tag="Evaluation Model",
+            evaluation_dataset_ids=[str(DATASET_TRAINING_1_ID)],
         ),
     )
 
@@ -318,9 +321,10 @@ async def seed_db(session: AsyncSession) -> None:
     ]
 
     for model_id, delta in entries:
-        session.add(InferenceCounter(
-            ai_model_id=model_id,
-            created_at=datetime.now(tz=UTC) - delta)
+        session.add(
+            InferenceCounter(
+                ai_model_id=model_id, created_at=datetime.now(tz=UTC) - delta
+            )
         )
     await session.commit()
 
