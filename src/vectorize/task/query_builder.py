@@ -77,7 +77,7 @@ def build_query(  # noqa: ANN201, PLR0913
     if statuses:
         query = query.where(model_table.c.task_status.in_(statuses))
 
-    if tag_filter and tag_col is not literal(None):
+    if tag_filter and tag_col is not None:
         query = query.where(tag_col == tag_filter)
 
     if baseline_id and hasattr(model, "baseline_model_id"):
