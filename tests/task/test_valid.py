@@ -16,10 +16,14 @@ _TASK_TYPE_OPTIONS = {
     "evaluation",
 }
 
+_BASELINE_ID = "7d2f3e4b-8c7f-4d2a-9f1e-0a6f3e4d2a5b"
+_DATASET_ID1 = "0a9d5e87-e497-4737-9829-2070780d10df"
+_DATASET_ID2 = "0b30b284-f7fe-4e6c-a270-17cafc5b5bcb"
+
 
 @pytest.mark.asyncio
 @pytest.mark.tasks
-class TestTasksValid:
+class TestAllTasksValid:
     """Tests for valid tasks endpoint requests."""
 
     @classmethod
@@ -289,3 +293,69 @@ class TestTasksValid:
         """Test tasks endpoint with invalid task type."""
         response = client.get("/tasks?task_type=invalid_type")
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+@pytest.mark.asyncio
+@pytest.mark.tasks
+class TestTrainEvaluationTasksValid:
+    """Tests for valid training and evaluation tasks endpoint requests."""
+
+    @classmethod
+    async def test_get_tasks_baseline_id_filter(cls, client: TestClient) -> None:
+        """Test tasks endpoint filtering by baseline_id."""
+        response = client.get(f"/tasks?baseline_id={_BASELINE_ID}")
+
+        assert response.status_code == status.HTTP_200_OK
+        tasks = response.json()
+        assert isinstance(tasks, list)
+        assert len(tasks) == 1
+
+        for task in tasks:
+            assert task["task_type"] == "training"
+            assert task["baseline_id"] == _BASELINE_ID
+
+    @classmethod
+    async def test_get_tasks_dataset_id_filter_training_dataset_1(
+        cls, client: TestClient
+    ) -> None:
+        """Test tasks endpoint filtering by dataset_id."""
+        tasks_with_datasetid = 2
+        response = client.get(f"/tasks?dataset_id={_DATASET_ID1}")
+
+        assert response.status_code == status.HTTP_200_OK
+        tasks = response.json()
+        assert isinstance(tasks, list)
+        assert len(tasks) == tasks_with_datasetid
+
+        found_types = {task["task_type"] for task in tasks}
+        assert found_types == {"training", "evaluation"}
+
+    @classmethod
+    async def test_get_tasks_dataset_id_filter_training_dataset_2(
+        cls, client: TestClient
+    ) -> None:
+        """Test tasks endpoint filtering by dataset_id."""
+        response = client.get(f"/tasks?dataset_id={_DATASET_ID2}")
+
+        assert response.status_code == status.HTTP_200_OK
+        tasks = response.json()
+        assert isinstance(tasks, list)
+        assert len(tasks) == 1
+
+        for task in tasks:
+            assert task["task_type"] == "evaluation"
+
+    @classmethod
+    async def test_get_tasks_dataset_id_with_task_type_filter(
+        cls, client: TestClient
+    ) -> None:
+        """Test tasks endpoint with dataset_id and task_type filters combined."""
+        response = client.get(f"/tasks?dataset_id={_DATASET_ID1}&task_type=training")
+
+        assert response.status_code == status.HTTP_200_OK
+        tasks = response.json()
+        assert isinstance(tasks, list)
+        assert len(tasks) == 1
+
+        for task in tasks:
+            assert task["task_type"] == "training"

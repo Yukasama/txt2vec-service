@@ -21,7 +21,7 @@ from .task_type import TaskType
 __all__ = ["get_tasks_db"]
 
 
-async def get_tasks_db(db: AsyncSession, params: TaskFilters) -> Sequence:
+async def get_tasks_db(db: AsyncSession, params: TaskFilters) -> Sequence:  # noqa: PLR0912
     """Retrieve tasks from database with filtering and pagination.
 
     Aggregates tasks from multiple types (upload, synthesis, dataset) with
@@ -39,17 +39,22 @@ async def get_tasks_db(db: AsyncSession, params: TaskFilters) -> Sequence:
     status_set = set(params.statuses or [])
 
     if params.baseline_id:
-        task_types: list[TaskType] = [TaskType.TRAINING]
+        available_types = [TaskType.TRAINING]
     elif params.dataset_id:
-        task_types: list[TaskType] = [TaskType.TRAINING, TaskType.EVALUATION]
+        available_types = [TaskType.TRAINING, TaskType.EVALUATION]
     else:
-        task_types: list[TaskType] = params.task_types or [
+        available_types = [
             TaskType.MODEL_UPLOAD,
             TaskType.SYNTHESIS,
             TaskType.DATASET_UPLOAD,
             TaskType.TRAINING,
             TaskType.EVALUATION,
         ]
+
+    if params.task_types:
+        task_types = [tt for tt in params.task_types if tt in available_types]
+    else:
+        task_types = available_types
 
     queries = []
     for tt in task_types:

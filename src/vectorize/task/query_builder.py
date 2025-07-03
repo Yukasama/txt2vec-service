@@ -1,6 +1,7 @@
 """Helpers for tasks repository."""
 
 from datetime import UTC, datetime, timedelta
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import ColumnElement, String, cast, func, literal, or_, select
@@ -123,7 +124,7 @@ def build_query(  # noqa: ANN201, PLR0912, PLR0913
 # -----------------------------------------------------------------------------
 
 
-def _get_base_columns(model, tag: str):  # noqa: ANN001
+def _get_base_columns(model, tag: str) -> list[Any]:  # noqa: ANN001
     """Get base columns for consistent empty query structure."""
     model_table = model.__table__
 
