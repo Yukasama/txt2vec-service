@@ -17,7 +17,18 @@ services:
   dramatiq_worker:
     build: ../..
     container_name: vectorize_dramatiq_worker
-    command: ["dramatiq", "vectorize.tasks", "-p", "2", "-t", "4", "--queues", "default", "--verbose"]
+    command:
+      [
+        "dramatiq",
+        "vectorize.tasks",
+        "-p",
+        "2",
+        "-t",
+        "4",
+        "--queues",
+        "default",
+        "--verbose",
+      ]
     networks: [vectorize-network]
     environment:
       ENV: production
@@ -48,7 +59,18 @@ services:
   dramatiq_training_worker:
     build: ../..
     container_name: vectorize_dramatiq_training
-    command: ["dramatiq", "vectorize.tasks", "-p", "2", "-t", "4", "--queues", "training", "--verbose"]
+    command:
+      [
+        "dramatiq",
+        "vectorize.tasks",
+        "-p",
+        "2",
+        "-t",
+        "4",
+        "--queues",
+        "training",
+        "--verbose",
+      ]
     networks: [vectorize-network]
     environment:
       ENV: production
@@ -79,7 +101,18 @@ services:
   dramatiq_evaluation_worker:
     build: ../..
     container_name: vectorize_dramatiq_evaluation
-    command: ["dramatiq", "vectorize.tasks", "-p", "2", "-t", "4", "--queues", "evaluation", "--verbose"]
+    command:
+      [
+        "dramatiq",
+        "vectorize.tasks",
+        "-p",
+        "2",
+        "-t",
+        "4",
+        "--queues",
+        "evaluation",
+        "--verbose",
+      ]
     networks: [vectorize-network]
     environment:
       ENV: production
@@ -106,13 +139,3 @@ services:
       timeout: 15s
       retries: 5
       start_period: 60s
-
-networks:
-  vectorize-network:
-    driver: bridge
-
-volumes:
-  datasets_data:
-  models_data:
-  db_data:
-  hf_home_data:
