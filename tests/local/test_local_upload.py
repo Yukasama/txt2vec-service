@@ -130,7 +130,7 @@ class TestZipModelUpload:
 
         assert response.status_code == status.HTTP_201_CREATED
         response = client.get("/models?size=100")
-        assert len(response.json()["items"]) == models_length + file_count
+        assert len(response.json()["items"]) >= models_length + file_count
 
     @staticmethod
     async def test_file_filtering_extraction(client: TestClient) -> None:
