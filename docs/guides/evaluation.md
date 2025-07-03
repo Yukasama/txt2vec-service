@@ -1,4 +1,4 @@
-# Evaluation Module
+# Evaluation Guide
 
 This module provides comprehensive evaluation capabilities for SBERT (Sentence-BERT) training quality assessment using cosine similarity metrics with seamless training-evaluation integration.
 

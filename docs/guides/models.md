@@ -1,4 +1,4 @@
-# AI Models
+# AI Models Guide
 
 This document describes the available API endpoints for managing AI models in the system, including retrieval, updates, and deletion. The endpoints provide ETag-based version control, pagination, and follow RESTful conventions using FastAPI and SQLModel.
 
