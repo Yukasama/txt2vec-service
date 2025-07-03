@@ -35,7 +35,6 @@ async def get_tasks_db(db: AsyncSession, params: TaskFilters) -> tuple[Sequence,
     Returns:
         Tuple containing:
         - Sequence of task action rows ordered by creation date (newest first).
-          Each row contains id, task_status, created_at, end_date, and task_type.
         - Total count of tasks matching the filters (without pagination).
     """
     if params.baseline_id:

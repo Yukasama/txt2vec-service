@@ -41,7 +41,3 @@ The dataset module provides comprehensive dataset management capabilities includ
 ## Dataset Sources
 
 ::: vectorize.dataset.dataset_source
-
-## Pagination
-
-::: vectorize.dataset.pagination

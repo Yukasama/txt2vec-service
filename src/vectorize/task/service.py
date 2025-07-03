@@ -26,8 +26,6 @@ async def get_tasks_svc(
     Returns:
         Tuple containing:
         - List of validated Pydantic models representing tasks.
-          Each model contains task metadata including ID, status,
-          creation date, and type information.
         - Total count of tasks matching the filters (without pagination).
     """
     rows, total = await get_tasks_db(db, params)

@@ -8,7 +8,7 @@ from loguru import logger
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from vectorize.config.db import get_session
-from vectorize.dataset.pagination import Page
+from vectorize.utils.pagination import Page
 
 from .models import TaskModel
 from .schemas import TaskFilters

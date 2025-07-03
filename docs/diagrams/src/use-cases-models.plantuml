@@ -1,0 +1,41 @@
+@startuml use-cases-models
+left to right direction
+skinparam actorStyle awesome
+actor User
+
+package "Model Upload" {
+    usecase UploadHuggingFace as "Upload from\nHugging Face Hub"
+    usecase UploadGitHub as "Upload from\nGitHub Repository"
+    usecase UploadLocal as "Upload Local\nZIP Archive"
+}
+
+package "Model Management" {
+    usecase ListModels as "List Models\nwith Pagination"
+    usecase GetModelDetails as "Get Model Details\nwith ETag Support"
+    usecase UpdateModel as "Update Model\nwith Version Control"
+    usecase DeleteModel as "Delete Model\nand Files"
+}
+
+package "Background Processing" {
+    usecase MonitorUpload as "Monitor Upload\nTask Status"
+    usecase ValidateFiles as "Validate Model\nFiles and Format"
+    usecase CacheModel as "Cache Model\nLocally"
+}
+
+User --> UploadHuggingFace
+User --> UploadGitHub
+User --> UploadLocal
+User --> ListModels
+User --> GetModelDetails
+User --> UpdateModel
+User --> DeleteModel
+
+UploadHuggingFace --> MonitorUpload
+UploadGitHub --> MonitorUpload
+UploadLocal --> MonitorUpload
+
+MonitorUpload --> ValidateFiles
+MonitorUpload --> CacheModel
+ValidateFiles --> CacheModel
+
+@enduml
