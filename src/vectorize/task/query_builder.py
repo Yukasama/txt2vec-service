@@ -41,7 +41,6 @@ def build_query(  # noqa: ANN201, PLR0913
         SQLAlchemy *Select* query.
     """
     model_table = model.__table__
-    ai_table = AIModel.__table__  # type: ignore
 
     if baseline_id and not hasattr(model, "baseline_model_id"):
         return select(*_get_base_columns(model, tag)).where(literal(False))
@@ -51,24 +50,7 @@ def build_query(  # noqa: ANN201, PLR0913
     ):
         return select(*_get_base_columns(model, tag)).where(literal(False))
 
-    if hasattr(model, "trained_model_id"):
-        join_expr = model_table.outerjoin(
-            ai_table,
-            func.coalesce(
-                model_table.c.trained_model_id, model_table.c.baseline_model_id
-            )
-            == ai_table.c.id,
-        )
-        tag_col = ai_table.c.model_tag
-    elif hasattr(model, "model_tag"):
-        join_expr = model_table
-        tag_col = model_table.c.model_tag
-    elif hasattr(model, "tag"):
-        join_expr = model_table
-        tag_col = model_table.c.tag
-    else:
-        join_expr = model_table
-        tag_col = literal(None)
+    join_expr, tag_col = _get_join_and_tag_column(model)
 
     if hasattr(model, "baseline_model_id"):
         baseline_col = model_table.c.baseline_model_id.label("baseline_id")
@@ -110,6 +92,40 @@ def build_query(  # noqa: ANN201, PLR0913
 # -----------------------------------------------------------------------------
 # Utility ---------------------------------------------------------------------
 # -----------------------------------------------------------------------------
+
+
+def _get_join_and_tag_column(model):  # noqa: ANN001, ANN202
+    """Determine join expression and tag column based on model attributes.
+
+    Args:
+        model: SQLModel table class being queried.
+
+    Returns:
+        Tuple of (join_expression, tag_column).
+    """
+    model_table = model.__table__
+    ai_table = AIModel.__table__  # type: ignore
+
+    if hasattr(model, "trained_model_id"):
+        join_expr = model_table.outerjoin(
+            ai_table,
+            func.coalesce(
+                model_table.c.trained_model_id, model_table.c.baseline_model_id
+            )
+            == ai_table.c.id,
+        )
+        tag_col = ai_table.c.model_tag
+    elif hasattr(model, "model_tag"):
+        join_expr = model_table
+        tag_col = model_table.c.model_tag
+    elif hasattr(model, "tag"):
+        join_expr = model_table
+        tag_col = model_table.c.tag
+    else:
+        join_expr = model_table
+        tag_col = literal(None)
+
+    return join_expr, tag_col
 
 
 def _apply_dataset_filter(query, model, dataset_id: UUID):  # noqa: ANN001, ANN202
