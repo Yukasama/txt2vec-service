@@ -58,7 +58,7 @@ class EvaluationTask(SQLModel, table=True):
         description="Information about the dataset used for evaluation.",
     )
 
-    evaluation_dataset_ids: list[UUID] = Field(
+    evaluation_dataset_ids: list[str] = Field(
         sa_column=Column(JSON),
         description="List of dataset IDs used for evaluation.",
     )

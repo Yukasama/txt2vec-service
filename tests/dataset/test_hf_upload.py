@@ -30,7 +30,7 @@ class TestHuggingFaceUpload:
                 ["train"],
                 ["default"],
             ),
-            ("Dahoas/full-hh-rlhf", ["train", "test"], ["default"]),
+            ("Dahoas/full-hh-rlhf", ["train"], ["default"]),
             ("argilla/distilabel-intel-orca-dpo-pairs", ["train"], ["default"]),
         ],
     )
