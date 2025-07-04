@@ -1,4 +1,4 @@
-## Project Overview
+# Frontend
 
 This project is a modern, full-featured web application for managing, training, evaluating, and visualizing machine learning models, datasets, and related tasks. It is built with Next.js (React), TypeScript, Tailwind CSS, and leverages React Query for data fetching and caching. The UI is component-driven, modular, and designed for extensibility and maintainability.
 
