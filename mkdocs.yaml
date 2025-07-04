@@ -77,6 +77,7 @@ nav:
       - Installation: installation.md
       - Contributing: contributing.md
       - Configuration: configuration.md
+      - Frontend: frontend.md
       - Monitoring with Grafana: grafana.md
       - Run local CI with Act: act.md
       - Technicals:
