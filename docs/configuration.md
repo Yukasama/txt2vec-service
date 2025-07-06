@@ -193,6 +193,24 @@ Model inference execution settings:
   - `"mps"`: Use Apple Metal Performance Shaders (for Apple Silicon Macs)
   - Override with `INFERENCE_DEVICE` environment variable
 
+### Cache Configuration (`[app.cache]`)
+
+Model caching and memory management settings for optimizing inference performance:
+
+- **`strategy`** (default: `"fixed_size"`): Cache eviction strategy for managing model memory
+  - `"fixed_size"`: Maintains a fixed number of models in cache (LRU eviction)
+  - `"vram_aware"`: Dynamically manages cache based on available VRAM
+  - `"usage_based"`: Prioritizes frequently used models for retention
+- **`max_models`** (default: `5`): Maximum number of models to keep in memory simultaneously
+  - Higher values improve performance but consume more memory
+  - Should be adjusted based on available system memory and model sizes
+  - Override with `CACHE_MAX_MODELS` environment variable
+- **`vram_safety_margin_gb`** (default: `1.0`): VRAM safety margin in gigabytes
+  - Reserved memory to prevent out-of-memory errors during inference
+  - Only applies when using GPU devices (`cuda`, `mps`)
+  - Larger margins provide more stability but reduce cache capacity
+  - Override with `VRAM_SAFETY_MARGIN` environment variable
+
 ### Evaluation Configuration (`[app.evaluation]`)
 
 Model evaluation and testing settings:
